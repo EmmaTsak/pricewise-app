@@ -6,9 +6,24 @@
 
 generator client {
   provider = "prisma-client"
-  output   = "../src/generated/prisma"
+  output   = "../generated/prisma"
 }
 
 datasource db {
   provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Product {
+  id          String   @id @default(cuid())
+  name        String
+  brand       String?
+  price       Float
+  supermarket String   // e.g., "AB Vasilopoulos"
+  category    String
+  photoURL    String
+  updatedAt   DateTime @updatedAt
+
+  @@index([supermarket])
+  @@index([category])
 }
