@@ -17,10 +17,11 @@ model Product {
   category    String
   photoURL    String
   url         String?
-  size        String?
   updatedAt   DateTime @updatedAt
 
   @@index([supermarket])
   @@index([category])
   @@index([productKey])
+
+  @@unique([productKey, supermarket])
 }

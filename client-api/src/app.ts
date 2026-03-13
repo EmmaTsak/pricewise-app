@@ -1,6 +1,8 @@
 import express from "express";
 import cors from "cors";
 import helmet from "helmet";
+import productRoutes from "./routes/product.routes";
+import emailRoutes from "./routes/email.routes";
 
 // Create an Express application
 const app = express();
@@ -14,18 +16,17 @@ app.use(cors());
 // Allow the server to read JSON data from requests
 app.use(express.json());
 
+// API routes
+app.use("/products", productRoutes);
+
+// Email routes
+app.use("/email-list", emailRoutes);
+
+// Health check endpoint
 app.get("/", (req, res) => {
   res.json({
     message: "PriceWise API is running"
-  });
-});
-
-import prisma from "./config/prisma";
-
-app.get("/products", async (req, res) => {
-  const products = await prisma.product.findMany();
-
-  res.json(products);
+    });
 });
 
 export default app;

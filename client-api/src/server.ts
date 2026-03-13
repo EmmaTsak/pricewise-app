@@ -1,7 +1,8 @@
 import http from "http";
-import { Server } from "socket.io";
 import app from "./app";
 import dotenv from "dotenv";
+import { initSocket } from "./sockets/socket";
+import { startScrapers } from "./scrapers/scheduler";
 
 // Load environment variables
 dotenv.config();
@@ -9,21 +10,10 @@ dotenv.config();
 // Create HTTP server using Express app
 const server = http.createServer(app);
 
-// Create Socket.IO server
-const io = new Server(server, {
-  cors: {
-    origin: "*",
-  }
-});
+// initialize Socket.IO
+initSocket(server);
 
-// Example WebSocket connection
-io.on("connection", (socket) => {
-  console.log("Client connected:", socket.id);
 
-  socket.on("disconnect", () => {
-    console.log("Client disconnected:", socket.id);
-  });
-});
 
 // Define the port
 const PORT = process.env.PORT || 5000;
@@ -31,4 +21,7 @@ const PORT = process.env.PORT || 5000;
 // Start the server
 server.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
+
+  // Start scrapers
+  startScrapers();
 });
