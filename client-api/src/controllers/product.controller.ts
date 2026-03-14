@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import prisma from "../config/prisma";
 import { getIO } from "../sockets/socket";
-
+import { cache } from "../utils/cache";
 /*
 GET /products
 Optional filters:
@@ -11,6 +11,13 @@ Optional filters:
 
 export const getProducts = async (req: Request, res: Response) => {
     try {
+        const cacheKey = JSON.stringify(req.query);
+        const cached = cache.get(cacheKey);
+
+        if (cached) {
+        return res.json(cached);
+        }
+
         const { supermarket, category } = req.query;
 
         // Build filtering object
@@ -31,6 +38,7 @@ export const getProducts = async (req: Request, res: Response) => {
                 updatedAt: "desc"
             }
         });
+        cache.set(cacheKey, products);
 
         res.json(products);
     } catch (error) {
@@ -47,10 +55,11 @@ Compare prices of the same product across supermarkets
 export const compareProductPrices = async (req: Request, res: Response) => {
     try {
         const { productKey } = req.params;
+        const key = Array.isArray(productKey) ? productKey[0] : productKey;
 
         const products = await prisma.product.findMany({
             where: {
-                productKey: productKey
+                productKey: key
             },
             select: {
                 supermarket: true,

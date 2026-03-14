@@ -3,6 +3,7 @@ import cors from "cors";
 import helmet from "helmet";
 import productRoutes from "./routes/product.routes";
 import emailRoutes from "./routes/email.routes";
+import { apiLimiter } from "./middleware/rateLimit";
 
 // Create an Express application
 const app = express();
@@ -21,6 +22,9 @@ app.use("/products", productRoutes);
 
 // Email routes
 app.use("/email-list", emailRoutes);
+
+// Apply rate limiting to all API routes
+app.use("/products", apiLimiter);
 
 // Health check endpoint
 app.get("/", (req, res) => {

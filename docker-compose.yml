@@ -1,0 +1,41 @@
+version: "3.9"
+
+services:
+
+  postgres:
+    image: postgres:15
+    container_name: pricewise-db
+    restart: always
+    environment:
+      POSTGRES_USER: pricewise
+      POSTGRES_PASSWORD: pricewise
+      POSTGRES_DB: pricewise
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+  backend:
+    build: ./client-api
+    container_name: pricewise-api
+    depends_on:
+      - postgres
+    ports:
+      - "5000:5000"
+    environment:
+      DATABASE_URL: postgresql://pricewise:pricewise@postgres:5432/pricewise
+    volumes:
+      - ./backend:/app
+
+  frontend:
+    build: ./frontend
+    container_name: pricewise-client
+    ports:
+      - "5173:5173"
+    depends_on:
+      - backend
+    environment:
+      VITE_API_URL: http://localhost:5000
+
+volumes:
+  postgres-data:

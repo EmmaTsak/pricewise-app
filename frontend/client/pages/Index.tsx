@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { getProductMeta, getProducts } from "../api/products";
-import ProductTable from "../components/products/ProductTable";
+import ProductTable from "../components/ProductTable";
 import type { Product } from "../types/product";
 import { useSocket } from "../hooks/useSocket";
 import { useTranslation } from "react-i18next";
@@ -11,6 +11,7 @@ export default function Index() {
   const [supermarkets, setSupermarkets] = useState<string[]>([]);
   const [selectedCategory, setSelectedCategory] = useState("");
   const [selectedSupermarket, setSelectedSupermarket] = useState("");
+  const [search, setSearch] = useState("");
   const { t } = useTranslation();
 
   /*
@@ -64,48 +65,66 @@ export default function Index() {
   useSocket(loadProducts);
   
   return (
-    <div style={{ padding: "20px" }}>
-      <h1>{t("title")}</h1>
+    <div className="max-w-6xl mx-auto px-6 py-8">
 
-      {/* Filters */}
-      <div style={{ display: "flex", gap: "16px", marginBottom: "20px" }}>
-        <div>
-          <label>{t("category")}</label>
-          <select
-            id="category"
-            value={selectedCategory}
-            onChange={(e) => setSelectedCategory(e.target.value)}
-          >
-            <option value="">All categories</option>
+      {/* Hero Section */}
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-gray-800">
+          PriceWise
+        </h1>
 
-            {categories.map((category) => (
-              <option key={category} value={category}>
-                {category}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div>
-          <label htmlFor="supermarket">Supermarket:</label>
-          <select
-            id="supermarket"
-            value={selectedSupermarket}
-            onChange={(e) => setSelectedSupermarket(e.target.value)}
-          >
-            <option value="">All supermarkets</option>
-
-            {supermarkets.map((supermarket) => (
-              <option key={supermarket} value={supermarket}>
-                {supermarket}
-              </option>
-            ))}
-          </select>
-        </div>
+        <p className="text-gray-500 mt-2">
+          Compare grocery prices across supermarkets
+        </p>
       </div>
 
-      {/* Product list */}
-      <ProductTable products={products} />
+      {/* Filters */}
+      <div className="bg-white shadow rounded-xl p-4 mb-8 flex flex-wrap gap-4">
+
+        {/* Search */}
+        <input
+          type="text"
+          placeholder="Search products..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="border rounded-lg px-3 py-2 flex-1 min-w-[200px]"
+        />
+
+        {/* Category */}
+        <select
+          value={selectedCategory}
+          onChange={(e) => setSelectedCategory(e.target.value)}
+          className="border rounded-lg px-3 py-2"
+        >
+          <option value="">All categories</option>
+
+          {categories.map((cat) => (
+            <option key={cat}>{cat}</option>
+          ))}
+        </select>
+
+        {/* Supermarket */}
+        <select
+          value={selectedSupermarket}
+          onChange={(e) => setSelectedSupermarket(e.target.value)}
+          className="border rounded-lg px-3 py-2"
+        >
+          <option value="">All supermarkets</option>
+
+          {supermarkets.map((s) => (
+            <option key={s}>{s}</option>
+          ))}
+        </select>
+
+      </div>
+
+      {/* Product Grid */}
+      <ProductTable
+        products={products.filter((p) =>
+          p.name.toLowerCase().includes(search.toLowerCase())
+        )}
+      />
+
     </div>
   );
 }

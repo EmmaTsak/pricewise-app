@@ -1,5 +1,5 @@
 /** @import must precede all other statements */
-
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap");
 
 @tailwind base;
 @tailwind components;
@@ -107,11 +107,11 @@
 
 @layer base {
   * {
-    @apply border-border;
+    @apply box-border;
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-white text-black font-sans;
   }
 
   :where(p, span, li, h1, h2, h3, h4, h5, h6, a, button, label, td, th) {
