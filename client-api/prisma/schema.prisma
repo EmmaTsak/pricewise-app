@@ -15,7 +15,7 @@ model Product {
   price       Decimal  @db.Decimal(6,2)
   supermarket String
   category    String
-  photoURL    String
+  photoURL    String?
   url         String?
   updatedAt   DateTime @updatedAt
 

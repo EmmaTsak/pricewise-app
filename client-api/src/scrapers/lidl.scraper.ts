@@ -1,7 +1,18 @@
-import { chromium } from "playwright";
+import axios from "axios";
 import prisma from "../config/prisma";
 
-const LIDL_URL = "https://www.lidl-hellas.gr/c/fagito-poto/s10068374";
+const SUPERMARKET = "Lidl";
+const CATEGORY_ID = "10068374";
+const FETCH_SIZE = 12;
+
+const lidlApi = axios.create({
+  baseURL: "https://www.lidl-hellas.gr",
+  timeout: 10000,
+  headers: {
+    "User-Agent":
+      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/122.0.0.0 Safari/537.36"
+  }
+});
 
 function slugify(text: string) {
   return text
@@ -11,81 +22,111 @@ function slugify(text: string) {
     .replace(/\s+/g, "-");
 }
 
-function parsePrice(priceText: string) {
-  const cleaned = priceText
-    .replace(/[^\d,.-]/g, "")
-    .replace(".", "")
-    .replace(",", ".");
-
-  return Number(cleaned);
-}
-
 export const scrapeLidl = async () => {
 
-  console.log("Starting Lidl scraper...");
+  console.log("Starting Lidl API scraper...");
 
-  const browser = await chromium.launch({ headless: false });
-  const page = await browser.newPage();
+  let offset = 0;
+  let totalSaved = 0;
+  let totalSkipped = 0;
 
-  await page.goto(LIDL_URL, {
-    waitUntil: "domcontentloaded",
-    timeout: 60000
-  });
+  while (true) {
 
-  // accept cookie popup if present
-  try {
-    await page.click('button:has-text("Αποδοχή")', { timeout: 5000 });
-  } catch {}
+    try {
 
-  // scroll to trigger lazy loading
-  await page.evaluate(() => window.scrollBy(0, window.innerHeight));
-
-  // wait for products
-  await page.waitForSelector(".product-grid-box__title", {
-    timeout: 30000
-  });
-
-  const products = await page.$$eval(".product-grid-box", cards =>
-    cards.map(card => ({
-      name: card.querySelector(".product-grid-box__title")?.textContent?.trim(),
-      price: card.querySelector(".ods-price__value")?.textContent?.trim(),
-      image: card.querySelector("img")?.getAttribute("src")
-    }))
-  );
-
-  console.log("Products found:", products.length);
-
-  for (const product of products) {
-
-    if (!product.name || !product.price) continue;
-
-    const price = parsePrice(product.price);
-    const productKey = slugify(product.name);
-
-    await prisma.product.upsert({
-      where: {
-        productKey_supermarket: {
-          productKey,
-          supermarket: "Lidl"
+      const response = await lidlApi.get("/q/api/search", {
+        params: {
+          offset: offset,
+          fetchsize: FETCH_SIZE,
+          locale: "el_GR",
+          assortment: "GR",
+          version: "2.0.0",
+          "category.id": CATEGORY_ID
         }
-      },
-      update: {
-        price,
-        photoURL: product.image ?? ""
-      },
-      create: {
-        name: product.name,
-        price,
-        photoURL: product.image ?? "",
-        productKey,
-        supermarket: "Lidl",
-        category: "Food & Drink"
+      });
+
+      const products = response.data.items;
+
+      if (!products || products.length === 0) {
+        console.log("No more Lidl products.");
+        break;
       }
-    });
+
+      console.log(`Fetched ${products.length} products (offset ${offset})`);
+
+      for (const item of products) {
+
+        try {
+
+          const data = item.gridbox?.data;
+
+          if (!data) {
+            totalSkipped++;
+            continue;
+          }
+
+          const name = data.title?.trim();
+          const rawPrice = data.price?.price;
+          const image = data.image ?? null;
+
+          if (!name || rawPrice == null) {
+            totalSkipped++;
+            continue;
+          }
+
+          const price = Number(rawPrice);
+
+          if (Number.isNaN(price)) {
+            totalSkipped++;
+            continue;
+          }
+
+          const productKey = slugify(name);
+
+          await prisma.product.upsert({
+            where: {
+              productKey_supermarket: {
+                productKey,
+                supermarket: SUPERMARKET
+              }
+            },
+            update: {
+              name,
+              price,
+              photoURL: image
+            },
+            create: {
+              name,
+              price,
+              photoURL: image,
+              productKey,
+              supermarket: SUPERMARKET,
+              category: "Food & Beverages"
+            }
+          });
+
+          totalSaved++;
+
+        } catch (error) {
+
+          totalSkipped++;
+          console.error("Failed to process Lidl product:", error);
+
+        }
+
+      }
+
+      offset += FETCH_SIZE;
+
+    } catch (error) {
+
+      console.error(`Failed to fetch Lidl products at offset ${offset}:`, error);
+      break;
+
+    }
 
   }
 
-  console.log("Saved products:", products.length);
-
-  await browser.close();
+  console.log(`Saved ${totalSaved} Lidl products.`);
+  console.log(`Skipped ${totalSkipped} Lidl products.`);
 };

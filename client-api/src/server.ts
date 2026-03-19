@@ -4,6 +4,7 @@ import dotenv from "dotenv";
 import { initSocket } from "./sockets/socket";
 import { startScrapers } from "./scrapers/scheduler";
 import { scrapeLidl } from "./scrapers/lidl.scraper";
+import { scrapeAB } from "./scrapers/ab.scraper";
 
 // Load environment variables
 dotenv.config();
@@ -25,4 +26,5 @@ server.listen(PORT, async () => {
 
   // Start scrapers
   await scrapeLidl();
+  await scrapeAB();
 });
