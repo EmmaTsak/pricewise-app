@@ -10,18 +10,17 @@ datasource db {
 model Product {
   id          String   @id @default(cuid())
   name        String
-  brand       String?
   productKey  String
-  price       Decimal  @db.Decimal(6,2)
+  price       Decimal  @db.Decimal(6, 2)
   supermarket String
   category    String
+  subcategory String
   photoURL    String?
   url         String?
   updatedAt   DateTime @updatedAt
 
+  @@unique([productKey, supermarket])
   @@index([supermarket])
   @@index([category])
   @@index([productKey])
-
-  @@unique([productKey, supermarket])
 }
