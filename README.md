@@ -14,7 +14,7 @@ Scalable backend with RESTful API
 
 Tech Stack:
 
-Frontenda:
+Frontend:
 React
 TypeScript
 CSS
@@ -52,3 +52,5 @@ Real-time price comparison across stores
 Aggregation of product data
 Smart filtering (price, category, store)
 Dynamic updates without page reload
+>>>>>>> 63aada3907d73e166dbc99e9b999a2d9204fa922
+
