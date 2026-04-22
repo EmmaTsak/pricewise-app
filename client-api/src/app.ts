@@ -8,29 +8,28 @@ import { apiLimiter } from "./middleware/rateLimit";
 // Create an Express application
 const app = express();
 
-// Enable security headers
+// Security middleware
 app.use(helmet());
 
-// Allow requests from the frontend
+// Allow requests from frontend
 app.use(cors());
 
-// Allow the server to read JSON data from requests
+// Parse JSON
 app.use(express.json());
+
+// Apply rate limiting BEFORE routes
+app.use("/products", apiLimiter);
+app.use("/email-list", apiLimiter);
 
 // API routes
 app.use("/products", productRoutes);
-
-// Email routes
 app.use("/email-list", emailRoutes);
 
-// Apply rate limiting to all API routes
-app.use("/products", apiLimiter);
-
-// Health check endpoint
+// Health check
 app.get("/", (req, res) => {
   res.json({
-    message: "PriceWise API is running"
-    });
+    message: "PriceWise API is running",
+  });
 });
 
 export default app;

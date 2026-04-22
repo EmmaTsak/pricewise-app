@@ -1,12 +1,10 @@
 import { Link } from "react-router-dom";
 import { ArrowLeft, Target, Users, Zap } from "lucide-react";
-import Navigation from "../components/Navigation";
 import Footer from "../components/Footer";
 
 export default function About() {
   return (
     <div className="flex flex-col min-h-screen bg-white">
-      <Navigation />
 
       <div className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-12">
         {/* Header */}

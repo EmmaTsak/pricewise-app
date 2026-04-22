@@ -1,113 +1,208 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
+import { Mail, Trash2, ShoppingCart, Send } from "lucide-react";
 import { useShoppingList } from "../context/ShoppingListContext";
+import { useToast } from "../context/ToastContext";
 import { sendShoppingListEmail } from "../api/products";
+import ProductImage from "../components/ProductImage";
 
 export default function ShoppingList() {
+  const { t } = useTranslation();
+  const { showToast } = useToast();
   const { items, removeItem } = useShoppingList();
+
   const [email, setEmail] = useState("");
+  const [sending, setSending] = useState(false);
 
   const handleSendEmail = async () => {
+    if (!email.trim()) {
+      showToast(t("shoppingList.alerts.missingEmail"), "error");
+      return;
+    }
+
+    if (items.length === 0) {
+      showToast(t("shoppingList.alerts.emptyList"), "error");
+      return;
+    }
+
     try {
+      setSending(true);
       await sendShoppingListEmail(email, items);
-      alert("Shopping list sent!");
+      showToast(t("shoppingList.alerts.sent"), "success");
+      setEmail("");
     } catch (error) {
-      alert("Failed to send email");
+      console.error(error);
+      showToast(t("shoppingList.alerts.failed"), "error");
+    } finally {
+      setSending(false);
     }
   };
 
   return (
-    <div className="max-w-4xl mx-auto px-6 py-8">
+    <div className="min-h-full">
+      {/* Hero */}
+      <section className="relative overflow-hidden border-b border-brand-blue-darker/10 bg-gradient-to-br from-white via-brand-cyan/10 to-brand-green/10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14 md:py-20">
+          <div className="max-w-3xl">
+            <div className="inline-flex items-center rounded-full border border-brand-blue-darker/10 bg-white/80 px-4 py-2 text-sm text-brand-blue-darker shadow-sm mb-5">
+              {t("shoppingList.badge")}
+            </div>
 
-      {/* Page Title */}
-      <h1 className="text-2xl font-bold mb-6">
-        Your Shopping List
-      </h1>
+            <h1 className="text-4xl md:text-5xl font-bold tracking-tight mb-5 bg-gradient-to-r from-brand-blue-darker via-brand-blue-dark to-brand-teal bg-clip-text text-transparent">
+              {t("shoppingList.title")}
+            </h1>
 
-      {/* Empty state */}
-      {items.length === 0 && (
-        <div className="text-gray-500">
-          Your shopping list is empty.
+            <p className="text-lg md:text-xl text-gray-700 leading-8 max-w-2xl">
+              {t("shoppingList.subtitle")}
+            </p>
+          </div>
         </div>
-      )}
+      </section>
 
-      {/* Items */}
-      <div className="flex flex-col gap-4">
+      {/* Content */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+        {items.length === 0 ? (
+          <div className="bg-white border border-brand-blue-darker/10 rounded-3xl shadow-sm p-10 text-center">
+            <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-brand-green to-brand-teal flex items-center justify-center">
+              <ShoppingCart size={28} className="text-white" />
+            </div>
 
-        {items.map((item) => (
-          <div
-            key={item.id}
-            className="flex items-center justify-between bg-white shadow rounded-lg p-4"
-          >
+            <h2 className="text-2xl font-semibold text-gray-900 mb-2">
+              {t("shoppingList.emptyTitle")}
+            </h2>
 
-            {/* Left section */}
-            <div className="flex items-center gap-4">
+            <p className="text-gray-600 max-w-xl mx-auto">
+              {t("shoppingList.empty")}
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
+            {/* Shopping list items */}
+            <div className="xl:col-span-2">
+              <div className="bg-white border border-brand-blue-darker/10 rounded-3xl shadow-sm p-6 md:p-8">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-brand-green to-brand-teal flex items-center justify-center">
+                    <ShoppingCart size={20} className="text-white" />
+                  </div>
 
-              <img
-                src={item.photoURL}
-                alt={item.name}
-                className="h-16 w-16 object-contain"
-              />
+                  <div>
+                    <h2 className="text-xl font-semibold text-gray-900">
+                      {t("shoppingList.itemsTitle")}
+                    </h2>
+                    <p className="text-sm text-gray-600">
+                      {t("shoppingList.itemsCount", { count: items.length })}
+                    </p>
+                  </div>
+                </div>
 
-              <div>
-                <div className="font-medium">{item.name}</div>
-                <div className="text-sm text-gray-500">
-                  {item.supermarket}
+                <div className="space-y-4">
+                  {items.map((item) => (
+                    <div
+                      key={item.id}
+                      className="rounded-2xl border border-brand-blue-darker/10 bg-white p-4 shadow-sm"
+                    >
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                        <div className="flex items-center gap-4 min-w-0">
+                          <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-white to-brand-cyan/10 flex items-center justify-center shrink-0 overflow-hidden">
+                            <ProductImage
+                              src={item.photoURL}
+                              alt={item.name}
+                              className="w-full h-full rounded-2xl"
+                              imgClassName="max-h-14 object-contain"
+                            />
+                          </div>
+
+                          <div className="min-w-0">
+                            <h3 className="font-semibold text-gray-900 leading-6">
+                              {item.name}
+                            </h3>
+
+                            <div className="flex flex-wrap items-center gap-2 mt-2">
+                              <span className="inline-flex items-center rounded-full bg-white border border-brand-blue-darker/10 px-3 py-1 text-xs font-medium text-brand-blue-darker shadow-sm">
+                                {item.supermarket}
+                              </span>
+
+                              <span className="text-sm text-gray-500">
+                                {item.category}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center justify-between sm:justify-end gap-4">
+                          <div className="text-left sm:text-right">
+                            <p className="text-xs uppercase tracking-wide text-gray-500 mb-1">
+                              {t("shoppingList.price")}
+                            </p>
+                            <p className="text-2xl font-bold text-brand-blue-darker">
+                              €{item.price}
+                            </p>
+                          </div>
+
+                          <button
+                            onClick={() => removeItem(item.id)}
+                            className="inline-flex items-center justify-center gap-2 rounded-2xl border border-red-200 bg-red-50 text-red-600 px-4 py-3 font-medium hover:bg-red-100 transition-colors"
+                          >
+                            <Trash2 size={18} />
+                            <span>{t("shoppingList.remove")}</span>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
-
             </div>
 
-            {/* Right section */}
-            <div className="flex items-center gap-4">
+            {/* Email panel */}
+            <div>
+              <div className="bg-white border border-brand-blue-darker/10 rounded-3xl shadow-sm p-6 md:p-8 sticky top-24">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-brand-blue-darker to-brand-teal flex items-center justify-center">
+                    <Mail size={20} className="text-white" />
+                  </div>
 
-              <span className="font-semibold text-green-600">
-                €{item.price}
-              </span>
+                  <div>
+                    <h2 className="text-xl font-semibold text-gray-900">
+                      {t("shoppingList.emailTitle")}
+                    </h2>
+                    <p className="text-sm text-gray-600">
+                      {t("shoppingList.emailSubtitle")}
+                    </p>
+                  </div>
+                </div>
 
-              <button
-                onClick={() => removeItem(item.id)}
-                className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600"
-              >
-                Remove
-              </button>
+                <div className="flex flex-col gap-4">
+                  <input
+                    type="email"
+                    placeholder={t("shoppingList.emailPlaceholder")}
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="w-full rounded-2xl border border-brand-blue-darker/10 bg-white px-4 py-3 text-gray-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-brand-teal"
+                  />
 
+                  <p className="text-sm text-gray-600 leading-7">
+                    {t("shoppingList.privacyNote")}
+                  </p>
+
+                  <button
+                    onClick={handleSendEmail}
+                    disabled={sending}
+                    className="inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-brand-green to-brand-teal text-white px-4 py-3 font-medium shadow-sm hover:shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <Send size={18} />
+                    <span>
+                      {sending
+                        ? t("shoppingList.sending")
+                        : t("shoppingList.send")}
+                    </span>
+                  </button>
+                </div>
+              </div>
             </div>
-
           </div>
-        ))}
-
-      </div>
-
-      {/* Email section */}
-      {items.length > 0 && (
-        <div className="mt-8 bg-white shadow rounded-lg p-6">
-
-          <h2 className="text-lg font-semibold mb-4">
-            Email your list
-          </h2>
-
-          <div className="flex gap-3">
-
-            <input
-              type="email"
-              placeholder="Enter your email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="border rounded px-3 py-2 flex-1"
-            />
-
-            <button
-              onClick={handleSendEmail}
-              className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-            >
-              Send
-            </button>
-
-          </div>
-
-        </div>
-      )}
-
+        )}
+      </section>
     </div>
   );
 }

@@ -1,21 +1,17 @@
 import {
-  Facebook,
-  Twitter,
-  Instagram,
-  Mail,
-  Phone,
-  MapPin,
   Heart,
   ShoppingCart,
 } from "lucide-react";
+import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 
 export default function Footer() {
   const currentYear = new Date().getFullYear();
+  const { t } = useTranslation();
 
   return (
-    <>
-      <footer className="bg-gradient-to-b from-white to-brand-blue-darker/5 border-t border-brand-blue-darker/10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <footer className="bg-gradient-to-b from-white to-brand-blue-darker/5 border-t border-brand-blue-darker/10 mt-12">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Main Footer Content */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 py-12">
           {/* Brand Section */}
@@ -24,141 +20,101 @@ export default function Footer() {
               <div className="w-8 h-8 bg-gradient-to-br from-brand-green to-brand-teal rounded-lg flex items-center justify-center">
                 <ShoppingCart size={18} className="text-white" />
               </div>
+
               <span className="text-lg font-bold bg-gradient-to-r from-brand-blue-darker via-brand-blue-dark to-brand-teal bg-clip-text text-transparent">
-                PriceCompare
+                PriceWise
               </span>
             </div>
-            <p className="text-gray-600 text-sm mb-4">
-              Smart grocery price comparison for savvy shoppers. Compare prices across stores and save big.
+
+            <p className="text-gray-600 text-sm mb-4 max-w-sm">
+              {t("footer.description")}
             </p>
-            <div className="flex gap-3">
-              <a
-                href="#"
-                className="w-10 h-10 rounded-lg bg-white hover:bg-brand-blue-darker text-brand-blue-darker hover:text-white transition-all flex items-center justify-center shadow-sm hover:shadow-md"
-              >
-                <Facebook size={18} />
-              </a>
-              <a
-                href="#"
-                className="w-10 h-10 rounded-lg bg-white hover:bg-brand-teal text-brand-teal hover:text-white transition-all flex items-center justify-center shadow-sm hover:shadow-md"
-              >
-                <Twitter size={18} />
-              </a>
-              <a
-                href="#"
-                className="w-10 h-10 rounded-lg bg-white hover:bg-brand-cyan text-brand-cyan hover:text-white transition-all flex items-center justify-center shadow-sm hover:shadow-md"
-              >
-                <Instagram size={18} />
-              </a>
-            </div>
           </div>
 
-          {/* Support */}
+          {/* Navigation */}
           <div>
-            <h3 className="font-bold text-gray-900 mb-4">Support</h3>
+            <h3 className="font-bold text-gray-900 mb-4">
+              {t("footer.navigationTitle")}
+            </h3>
+
             <ul className="space-y-2">
               <li>
-                <a
-                  href="#"
+                <Link
+                  to="/"
                   className="text-gray-600 hover:text-brand-blue-darker transition-colors text-sm"
                 >
-                  Help Center
-                </a>
+                  {t("nav.compare")}
+                </Link>
               </li>
+
               <li>
-                <a
-                  href="#"
+                <Link
+                  to="/shopping-list"
                   className="text-gray-600 hover:text-brand-blue-darker transition-colors text-sm"
                 >
-                  Contact Us
-                </a>
+                  {t("nav.shoppingList")}
+                </Link>
               </li>
+
               <li>
-                <a
-                  href="#"
+                <Link
+                  to="/about"
                   className="text-gray-600 hover:text-brand-blue-darker transition-colors text-sm"
                 >
-                  FAQ
-                </a>
+                  {t("nav.about")}
+                </Link>
               </li>
+
               <li>
-                <a
-                  href="#"
+                <Link
+                  to="/privacy"
                   className="text-gray-600 hover:text-brand-blue-darker transition-colors text-sm"
                 >
-                  Privacy Policy
-                </a>
-              </li>
-              <li>
-                <a
-                  href="#"
-                  className="text-gray-600 hover:text-brand-blue-darker transition-colors text-sm"
-                >
-                  Terms of Service
-                </a>
+                  {t("footer.privacy")}
+                </Link>
               </li>
             </ul>
           </div>
 
-          {/* Contact */}
+          {/* Privacy / Storage Summary */}
           <div>
-            <h3 className="font-bold text-gray-900 mb-4">Contact Us</h3>
-            <ul className="space-y-3">
-              <li className="flex items-start gap-3">
-                <Phone size={18} className="text-brand-blue-darker mt-0.5 flex-shrink-0" />
-                <div>
-                  <p className="text-gray-600 text-sm">1-800-COMPARE</p>
-                  <p className="text-gray-500 text-xs">Available 24/7</p>
-                </div>
-              </li>
-              <li className="flex items-start gap-3">
-                <Mail size={18} className="text-brand-teal mt-0.5 flex-shrink-0" />
-                <div>
-                  <p className="text-gray-600 text-sm">support@pricecompare.com</p>
-                  <p className="text-gray-500 text-xs">Response within 2 hours</p>
-                </div>
-              </li>
-              <li className="flex items-start gap-3">
-                <MapPin size={18} className="text-brand-cyan mt-0.5 flex-shrink-0" />
-                <div>
-                  <p className="text-gray-600 text-sm">123 Smart Shopping Blvd</p>
-                  <p className="text-gray-500 text-xs">Your City, ST 12345</p>
-                </div>
-              </li>
+            <h3 className="font-bold text-gray-900 mb-4">
+              {t("footer.privacyTitle")}
+            </h3>
+
+            <ul className="space-y-3 text-sm text-gray-600">
+              <li>{t("footer.privacyPoint1")}</li>
+              <li>{t("footer.privacyPoint2")}</li>
+              <li>{t("footer.privacyPoint3")}</li>
             </ul>
           </div>
         </div>
 
         {/* Bottom Bar */}
-        <div className="border-t border-gray-200 py-6 flex flex-col sm:flex-row items-center justify-between">
-          <p className="text-gray-600 text-sm flex items-center gap-2">
-            © {currentYear} PriceCompare. Made with{" "}
+        <div className="border-t border-gray-200 py-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <p className="text-gray-600 text-sm flex items-center gap-2 text-center sm:text-left">
+            © {currentYear} PriceWise. {t("footer.madeWith")}
             <Heart size={16} className="text-brand-green fill-brand-green" />
-            for smart shoppers.
+            {t("footer.forShoppers")}
           </p>
-          <div className="flex gap-6 mt-4 sm:mt-0">
-            <a
-              href="#"
+
+          <div className="flex flex-wrap items-center justify-center gap-6">
+            <Link
+              to="/privacy"
               className="text-gray-600 hover:text-brand-blue-darker transition-colors text-sm"
             >
-              Accessibility
-            </a>
-            <a
-              href="#"
+              {t("footer.privacy")}
+            </Link>
+
+            <Link
+              to="/about"
               className="text-gray-600 hover:text-brand-blue-darker transition-colors text-sm"
             >
-              Sitemap
-            </a>
-            <a
-              href="#"
-              className="text-gray-600 hover:text-brand-blue-darker transition-colors text-sm"
-            >
-              Feedback
-            </a>
+              {t("nav.about")}
+            </Link>
           </div>
         </div>
       </div>
     </footer>
-    </>
   );
 }

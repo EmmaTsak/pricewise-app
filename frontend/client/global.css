@@ -107,11 +107,11 @@
 
 @layer base {
   * {
-    @apply box-border;
+    @apply border-border;
   }
 
   body {
-    @apply bg-white text-black font-sans;
+    @apply bg-background text-foreground font-sans;
   }
 
   :where(p, span, li, h1, h2, h3, h4, h5, h6, a, button, label, td, th) {

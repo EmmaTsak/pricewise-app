@@ -1,6 +1,18 @@
-<li class="sc-3brks3-4 jpLtXo product-item ">
-</li><a aria-label="DOLE Μπανάνες Dole Βιολογικής Γεωργίας Εισαγωγής" data-testid="product-block-image-link" tabindex="0" href="/el/eshop/Oporopoleio/Froyta/Mpananes/Mpananes-Dole-Viologikis-Georgias-Eisagogis/p/7063312" class="sc-y4jrw3-8 kepUvv">flex
-<a data-testid="product-block-name-link" tabindex="-1" title="DOLE Μπανάνες Dole Βιολογικής Γεωργίας Εισαγωγής" href="/el/eshop/Oporopoleio/Froyta/Mpananes/Mpananes-Dole-Viologikis-Georgias-Eisagogis/p/7063312" class="sc-y4jrw3-8 kepUvv"><span data-testid="product-brand">DOLE </span><span data-testid="product-name">Μπανάνες Dole Βιολογικής Γεωργίας Εισαγωγής</span></a>
-<div data-testid="product-block-attributes" class="sc-y4jrw3-17 eDvkjg">flex
-<div data-testid="product-block-price-per-unit" data-stellar="st-web-price" type="normal" aria-label="Τιμή τεμαχίου: 1 ευρώ και 99 λεπτά ανά κιλ" class="sc-dqia0p-3 jPfrhL">…</div>flex
-<div data-stellar="st-web-price" data-testid="product-block-price" aria-label="Τιμή: 1 ευρώ και 17 λεπτά" class="sc-dqia0p-1 gOQRak">…</div>flex
+Clean up the socket setup:
+move the backend/frontend URLs into environment variables instead of hardcoding localhost values.
+Harden the email flow a bit:
+validate email format, improve error messages, and confirm the Nodemailer config is safe and reliable.
+Review the scraper schedule and startup behavior:
+decide whether immediate scrape-on-start should stay in production and confirm the cron timing you want.
+Do a final UI cleanup pass:
+check spacing, button consistency, image fallbacks, and mobile behavior one more time.
+Remove dead code and leftovers from earlier versions:
+unused imports, commented old scraper calls, old alert-based logic, duplicate styling.
+Verify translations completely:
+make sure there are no missing EN/GR keys in navbar, footer, home, about, privacy, shopping list, compare modal, and toast messages.
+Prepare production environment setup:
+backend .env, frontend API/socket URL config, database URL, email credentials, and allowed CORS origins.
+Do deployment prep:
+build frontend and backend, run Prisma migration in the target environment, and test the deployed app.
+After deployment prep, do one final MVP checklist:
+product browsing, filters, compare, shopping list, email sending, live refresh, privacy page, translations, and mobile navigation.

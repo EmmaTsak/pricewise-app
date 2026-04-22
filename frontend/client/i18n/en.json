@@ -1,12 +1,95 @@
 {
-  "title": "PriceWise",
-  "search": "Search products",
-  "category": "Category",
-  "supermarket": "Supermarket",
-  "compare": "Compare",
-  "add_to_list": "Add to list",
-  "shopping_list": "Shopping List",
-  "email_list": "Email my list",
-  "remove": "Remove",
-  "no_products": "No products found"
+  "privacy": {
+    "title": "Privacy Policy",
+    "sections": {
+      "what": {
+        "title": "1. What PriceWise does",
+        "text": "PriceWise helps users compare grocery prices across supermarkets and create shopping lists."
+      },
+      "accounts": {
+        "title": "2. No user accounts",
+        "text": "PriceWise does not require user registration and does not create user accounts."
+      },
+      "storage": {
+        "title": "3. Shopping list storage",
+        "text": "Your shopping list is stored only in your browser using localStorage."
+      },
+      "email": {
+        "title": "4. Email usage",
+        "text": "Your email is used only to send your shopping list and is not stored."
+      }
+    }
+  },
+  "shoppingList": {
+    "badge": "Your saved products",
+    "title": "Your Shopping List",
+    "subtitle": "Review your saved products, remove items, and send the list to yourself when needed.",
+    "emptyTitle": "Your shopping list is empty",
+    "empty": "Add products from the comparison page and they will appear here.",
+    "itemsTitle": "Saved items",
+    "itemsCount_one": "{{count}} item in your list",
+    "itemsCount_other": "{{count}} items in your list",
+    "price": "Price",
+    "emailTitle": "Email your list",
+    "emailSubtitle": "Send your shopping list to your email",
+    "emailPlaceholder": "Enter your email",
+    "privacyNote": "Your email is used only to send this shopping list to you. PriceWise does not store your email address after sending.",
+    "send": "Send",
+    "sending": "Sending...",
+    "remove": "Remove",
+    "alerts": {
+      "missingEmail": "Please enter your email address.",
+      "emptyList": "Your shopping list is empty.",
+      "sent": "Shopping list sent!",
+      "failed": "Failed to send email."
+    }
+  },
+  "home": {
+    "badge": "Smart grocery comparison",
+    "title": "PriceWise",
+    "subtitle": "Compare grocery prices across supermarkets",
+    "filters": {
+      "title": "Find the best prices",
+      "subtitle": "Filter products by supermarket and category",
+      "supermarket": "Supermarket",
+      "category": "Category",
+      "allSupermarkets": "All supermarkets",
+      "allCategories": "All categories"
+    },
+    "states": {
+      "loading": "Loading products...",
+      "empty": "No products found."
+    },
+    "compare": {
+      "title": "Price Comparison",
+      "close": "Close",
+      "failed": "Failed to load comparison:",
+      "subtitle": "Compare the same product across supermarkets",
+      "bestDeal": "Best Deal",
+      "availablePrice": "Available price"
+    }
+  },
+  "nav": {
+    "compare": "Compare Prices",
+    "shoppingList": "Shopping List",
+    "about": "About",
+    "language": "Language"
+  },
+  "footer": {
+    "description": "Smart grocery price comparison for shoppers in Greece. Compare prices, build your list, and save time.",
+    "navigationTitle": "Navigation",
+    "privacyTitle": "Privacy Summary",
+    "privacy": "Privacy Policy",
+    "privacyPoint1": "No user accounts are required.",
+    "privacyPoint2": "Your shopping list is stored only in your browser.",
+    "privacyPoint3": "Your email is used only when you choose to send your list.",
+    "madeWith": "Made with",
+    "forShoppers": "for smart shoppers."
+  },
+  "product": {
+    "price": "Price",
+    "addToList": "Add to List",
+    "compare": "Compare",
+    "noImage": "No image available"
+  }
 }

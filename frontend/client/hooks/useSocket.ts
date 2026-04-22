@@ -1,17 +1,25 @@
 import { useEffect } from "react";
 import { io } from "socket.io-client";
+import { env } from "../config/env";
 
-const socket = io("http://localhost:5000");
+// Create one shared socket connection for the app.
+const socket = io(env.socketUrl, {
+  transports: ["websocket", "polling"],
+});
 
-export const useSocket = (onPriceUpdate: () => void) => {
+export const useSocket = (onPricesChanged: () => void) => {
   useEffect(() => {
-    socket.on("price-updated", () => {
-      console.log("Price updated event received");
-      onPriceUpdate();
-    });
+    const handleRefresh = () => {
+      console.log("Realtime refresh event received");
+      onPricesChanged();
+    };
+
+    socket.on("price-updated", handleRefresh);
+    socket.on("prices-refreshed", handleRefresh);
 
     return () => {
-      socket.off("price-updated");
+      socket.off("price-updated", handleRefresh);
+      socket.off("prices-refreshed", handleRefresh);
     };
-  }, [onPriceUpdate]);
+  }, [onPricesChanged]);
 };

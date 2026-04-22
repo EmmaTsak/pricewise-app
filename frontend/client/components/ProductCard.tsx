@@ -1,51 +1,84 @@
+import { ShoppingCart, ArrowRightLeft } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import type { Product } from "../types/product";
 import { useShoppingList } from "../context/ShoppingListContext";
+import ProductImage from "./ProductImage";
 
 type ProductCardProps = {
   product: Product;
   onCompare: (productKey: string) => void;
 };
 
-export default function ProductCard({ product, onCompare }: ProductCardProps) {
+export default function ProductCard({
+  product,
+  onCompare,
+}: ProductCardProps) {
+  const { t } = useTranslation();
   const { addItem } = useShoppingList();
 
+  const handleAddToList = () => {
+    addItem(product);
+  };
+
   return (
-    <div className="bg-white rounded-xl shadow hover:shadow-lg transition p-4 flex flex-col gap-3">
+    <div className="group bg-white border border-brand-blue-darker/10 rounded-3xl shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden">
+      {/* Image area */}
+      <div className="relative bg-gradient-to-br from-white to-brand-cyan/10 p-6 h-52 flex items-center justify-center">
+        <ProductImage
+          src={product.photoURL}
+          alt={product.name}
+          className="w-full h-full"
+          imgClassName="max-h-36 object-contain transition-transform duration-300 group-hover:scale-105"
+        />
 
-      <img
-        src={product.photoURL}
-        alt={product.name}
-        className="h-32 object-contain"
-      />
-
-      <h3 className="font-semibold text-gray-800">{product.name}</h3>
-
-      <span className="text-sm text-gray-500">
-        {product.supermarket}
-      </span>
-
-      <strong className="text-lg text-green-600">
-        €{product.price}
-      </strong>
-
-      <div className="flex gap-2 mt-2">
-
-        <button
-          onClick={() => onCompare(product.productKey)}
-          className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 rounded"
-        >
-          Compare
-        </button>
-
-        <button
-          onClick={() => addItem(product)}
-          className="flex-1 bg-green-600 hover:bg-green-700 text-white py-2 rounded"
-        >
-          Add
-        </button>
-
+        <div className="absolute top-4 left-4">
+          <span className="inline-flex items-center rounded-full bg-white/90 border border-brand-blue-darker/10 px-3 py-1 text-xs font-medium text-brand-blue-darker shadow-sm">
+            {product.supermarket}
+          </span>
+        </div>
       </div>
 
+      {/* Content */}
+      <div className="p-5">
+        <div className="mb-3">
+          <h3 className="font-semibold text-gray-900 leading-6 line-clamp-2 min-h-[3rem]">
+            {product.name}
+          </h3>
+
+          <p className="text-sm text-gray-500 mt-1">
+            {product.category}
+          </p>
+        </div>
+
+        <div className="flex items-end justify-between mb-5">
+          <div>
+            <p className="text-xs uppercase tracking-wide text-gray-500 mb-1">
+              {t("product.price")}
+            </p>
+            <p className="text-2xl font-bold text-brand-blue-darker">
+              €{product.price}
+            </p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-3">
+          <button
+            onClick={handleAddToList}
+            className="inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-brand-green to-brand-teal text-white px-4 py-3 font-medium shadow-sm hover:shadow-md transition-all"
+          >
+            <ShoppingCart size={18} />
+            <span>{t("product.addToList")}</span>
+          </button>
+
+          <button
+            onClick={() => onCompare(product.productKey)}
+            className="inline-flex items-center justify-center gap-2 rounded-2xl border border-brand-blue-darker/10 bg-white text-brand-blue-darker px-4 py-3 font-medium hover:bg-brand-blue-darker/5 transition-colors"
+          >
+            <ArrowRightLeft size={18} />
+            <span>{t("product.compare")}</span>
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
