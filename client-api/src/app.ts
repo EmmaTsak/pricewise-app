@@ -5,28 +5,42 @@ import productRoutes from "./routes/product.routes";
 import emailRoutes from "./routes/email.routes";
 import { apiLimiter } from "./middleware/rateLimit";
 
-// Create an Express application
 const app = express();
 
-// Security middleware
 app.use(helmet());
 
-// Allow requests from frontend
-app.use(cors());
+// Read allowed origins from environment variables.
+// Example:
+// CORS_ORIGINS=http://localhost:5173,https://pricewise.gr
+const allowedOrigins =
+  process.env.CORS_ORIGINS?.split(",").map((origin) => origin.trim()) || [];
 
-// Parse JSON
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      // Allow non-browser tools like curl/postman that may not send an origin.
+      if (!origin) {
+        return callback(null, true);
+      }
+
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+
+      return callback(new Error("CORS origin not allowed"));
+    },
+  })
+);
+
 app.use(express.json());
 
-// Apply rate limiting BEFORE routes
 app.use("/products", apiLimiter);
 app.use("/email-list", apiLimiter);
 
-// API routes
 app.use("/products", productRoutes);
 app.use("/email-list", emailRoutes);
 
-// Health check
-app.get("/", (req, res) => {
+app.get("/", (_req, res) => {
   res.json({
     message: "PriceWise API is running",
   });
