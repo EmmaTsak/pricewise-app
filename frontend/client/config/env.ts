@@ -1,5 +1,8 @@
-const apiBaseUrl = import.meta.env.VITE_API_BASE_URL;
-const socketUrl = import.meta.env.VITE_SOCKET_URL;
+const apiBaseUrl =
+  import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
+
+const socketUrl =
+  import.meta.env.VITE_SOCKET_URL || "http://localhost:5000";
 
 // Small safety check so mistakes are easier to spot during development.
 if (!apiBaseUrl) {

@@ -48,8 +48,8 @@ export default function ProductTable({ products }: ProductTableProps) {
       </div>
 
       {open && (
-        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="w-full max-w-2xl bg-white rounded-3xl shadow-2xl border border-brand-blue-darker/10 overflow-hidden">
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+          <div className="w-full max-w-2xl max-h-[90vh] bg-white rounded-3xl shadow-2xl border border-brand-blue-darker/10 overflow-hidden">
             {/* Header */}
             <div className="flex items-start justify-between gap-4 p-6 border-b border-brand-blue-darker/10 bg-gradient-to-r from-white via-brand-cyan/10 to-brand-green/10">
               <div>
@@ -77,7 +77,7 @@ export default function ProductTable({ products }: ProductTableProps) {
             </div>
 
             {/* Body */}
-            <div className="p-6">
+            <div className="p-6 overflow-y-auto max-h-[65vh]">
               <div className="space-y-4">
                 {comparison.map((item, index) => {
                   const isBest = item.price === bestPrice;

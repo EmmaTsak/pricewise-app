@@ -39,8 +39,9 @@ export default function ProductImage({
     <img
       src={src}
       alt={alt}
+      loading="lazy"
       onError={() => setHasError(true)}
-      className={imgClassName}
+      className={`max-w-full ${imgClassName}`}
     />
   );
 }

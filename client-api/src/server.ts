@@ -3,6 +3,7 @@ import dotenv from "dotenv";
 import app from "./app";
 import { initSocket } from "./sockets/socket";
 import { startScrapers, runAllScrapers } from "./scrapers/scheduler";
+import { mailTransporter } from "./config/mail";
 
 dotenv.config();
 
@@ -18,9 +19,18 @@ server.listen(PORT, async () => {
   startScrapers();
 
   if (shouldRunScrapeOnStart) {
-    console.log("RUN_SCRAPE_ON_START is enabled. Running scrapers now...");
+    console.log("RUN_SCRAPE_ON_START is true. Running scrapers now...");
     await runAllScrapers();
   } else {
     console.log("Skipping immediate scrape on startup.");
+  }
+
+  if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
+    try {
+      await mailTransporter.verify();
+      console.log("Email transporter is ready.");
+    } catch (error) {
+      console.error("Email transporter verification failed:", error);
+    }
   }
 });

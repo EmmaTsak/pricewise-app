@@ -1,46 +1,71 @@
 import { Request, Response } from "express";
-import nodemailer from "nodemailer";
+import { mailTransporter } from "../config/mail";
+import { isValidEmail } from "../utils/validateEmail";
+
+type ShoppingListItem = {
+  name?: string;
+  supermarket?: string;
+  price?: number | string;
+};
 
 export const sendShoppingList = async (req: Request, res: Response) => {
   try {
     const { email, items } = req.body;
 
-    if (!email || !items || !Array.isArray(items) || items.length === 0) {
+    if (!email || typeof email !== "string") {
       return res.status(400).json({
-        error: "Missing email or shopping list"
+        error: "Please provide an email address.",
       });
     }
 
-    const transporter = nodemailer.createTransport({
-      service: "gmail",
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS
-      }
-    });
+    const receiverEmail = email.trim();
+
+    if (!isValidEmail(receiverEmail)) {
+      return res.status(400).json({
+        error: "Please enter a valid email address.",
+      });
+    }
+
+    if (!Array.isArray(items) || items.length === 0) {
+      return res.status(400).json({
+        error: "Your shopping list is empty.",
+      });
+    }
+
+    if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+      return res.status(500).json({
+        error: "Email service is not configured correctly.",
+      });
+    }
 
     const listText = items
-      .map(
-        (item: any) =>
-          `• ${item.name} (${item.supermarket}) - €${item.price}`
-      )
+      .map((item: ShoppingListItem) => {
+        const name = item.name ?? "Unnamed item";
+        const supermarket = item.supermarket ?? "Unknown supermarket";
+        const price = item.price ?? "-";
+
+        return `• ${name} (${supermarket}) - €${price}`;
+      })
       .join("\n");
 
-    await transporter.sendMail({
-      from: process.env.EMAIL_USER,
-      to: email,
-      subject: "Your PriceWise Shopping List",
+    await mailTransporter.sendMail({
+      from: `"PriceWise" <${process.env.EMAIL_USER}>`,
+      to: receiverEmail,
+      subject: "Your Shopping List",
       text:
         `Here is your shopping list:\n\n${listText}\n\n` +
-        `This email was sent because you requested it in PriceWise. ` +
-        `PriceWise does not store your email address after sending.`
+        `This email was sent because you requested it in PriceWise.\n` +
+        `PriceWise does not store your email address.`,
     });
 
-    res.json({ message: "Email sent successfully" });
+    return res.status(200).json({
+      message: "Shopping list sent successfully.",
+    });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({
-      error: "Failed to send email"
+    console.error("Failed to send shopping list email:", error);
+
+    return res.status(500).json({
+      error: "We could not send your shopping list right now. Please try again later.",
     });
   }
 };

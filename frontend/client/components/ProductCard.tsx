@@ -32,7 +32,7 @@ export default function ProductCard({
         />
 
         <div className="absolute top-4 left-4">
-          <span className="inline-flex items-center rounded-full bg-white/90 border border-brand-blue-darker/10 px-3 py-1 text-xs font-medium text-brand-blue-darker shadow-sm">
+          <span className="inline-flex min-h-12 items-center justify-center gap-2 rounded-2xl border border-brand-blue-darker/10 bg-white text-brand-blue-darker px-4 py-3 text-sm sm:text-base font-medium hover:bg-brand-blue-darker/5 transition-colors">
             {product.supermarket}
           </span>
         </div>
@@ -61,10 +61,10 @@ export default function ProductCard({
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <button
             onClick={handleAddToList}
-            className="inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-brand-green to-brand-teal text-white px-4 py-3 font-medium shadow-sm hover:shadow-md transition-all"
+            className="inline-flex min-h-12 items-center justify-center gap-2 rounded-2xl border border-brand-blue-darker/10 bg-white text-brand-blue-darker px-4 py-3 text-sm sm:text-base font-medium hover:bg-brand-blue-darker/5 transition-colors"
           >
             <ShoppingCart size={18} />
             <span>{t("product.addToList")}</span>

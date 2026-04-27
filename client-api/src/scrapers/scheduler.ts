@@ -12,24 +12,30 @@ export const runAllScrapers = async () => {
 
   try {
     isRunning = true;
-    console.log("Starting scheduled scraper run...");
+    console.log("Starting scraper run...");
 
     await scrapeLidl();
     await scrapeAB();
 
-    console.log("Scheduled scraper run completed.");
+    console.log("Scraper run completed.");
   } catch (error) {
-    console.error("Scheduled scraper run failed:", error);
+    console.error("Scraper run failed:", error);
   } finally {
     isRunning = false;
   }
 };
 
 export const startScrapers = () => {
-  console.log("Scraper scheduler started.");
+  const cronSchedule = process.env.SCRAPER_CRON || "0 */6 * * *";
 
-  // Run every 6 hours
-  cron.schedule("0 */6 * * *", async () => {
+  if (!cron.validate(cronSchedule)) {
+    console.error(`Invalid SCRAPER_CRON value: ${cronSchedule}`);
+    return;
+  }
+
+  console.log(`Scraper scheduler started with cron: ${cronSchedule}`);
+
+  cron.schedule(cronSchedule, async () => {
     await runAllScrapers();
   });
 };

@@ -5,6 +5,7 @@ import { useShoppingList } from "../context/ShoppingListContext";
 import { useToast } from "../context/ToastContext";
 import { sendShoppingListEmail } from "../api/products";
 import ProductImage from "../components/ProductImage";
+import { isValidEmail } from "../utils/validateEmail";
 
 export default function ShoppingList() {
   const { t } = useTranslation();
@@ -15,28 +16,39 @@ export default function ShoppingList() {
   const [sending, setSending] = useState(false);
 
   const handleSendEmail = async () => {
-    if (!email.trim()) {
-      showToast(t("shoppingList.alerts.missingEmail"), "error");
-      return;
-    }
+  const trimmedEmail = email.trim();
 
-    if (items.length === 0) {
-      showToast(t("shoppingList.alerts.emptyList"), "error");
-      return;
-    }
+  if (!trimmedEmail) {
+    showToast(t("shoppingList.alerts.missingEmail"), "error");
+    return;
+  }
 
-    try {
-      setSending(true);
-      await sendShoppingListEmail(email, items);
-      showToast(t("shoppingList.alerts.sent"), "success");
-      setEmail("");
-    } catch (error) {
-      console.error(error);
-      showToast(t("shoppingList.alerts.failed"), "error");
-    } finally {
-      setSending(false);
-    }
-  };
+  if (!isValidEmail(trimmedEmail)) {
+    showToast(t("shoppingList.alerts.invalidEmail"), "error");
+    return;
+  }
+
+  if (items.length === 0) {
+    showToast(t("shoppingList.alerts.emptyList"), "error");
+    return;
+  }
+
+  try {
+    setSending(true);
+
+    await sendShoppingListEmail(trimmedEmail, items);
+
+    showToast(t("shoppingList.alerts.sent"), "success");
+    setEmail("");
+  } catch (error: any) {
+    const message =
+      error?.response?.data?.error || t("shoppingList.alerts.failed");
+
+    showToast(message, "error");
+  } finally {
+    setSending(false);
+  }
+};
 
   return (
     <div className="min-h-full">

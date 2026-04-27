@@ -41,7 +41,8 @@
       "missingEmail": "Please enter your email address.",
       "emptyList": "Your shopping list is empty.",
       "sent": "Shopping list sent!",
-      "failed": "Failed to send email."
+      "failed": "Failed to send email.",
+      "invalidEmail": "Please enter a valid email address."
     }
   },
   "home": {
@@ -73,7 +74,9 @@
     "compare": "Compare Prices",
     "shoppingList": "Shopping List",
     "about": "About",
-    "language": "Language"
+    "language": "Language",
+    "openMenu": "Open menu",
+    "closeMenu": "Close menu"
   },
   "footer": {
     "description": "Smart grocery price comparison for shoppers in Greece. Compare prices, build your list, and save time.",
@@ -91,5 +94,50 @@
     "addToList": "Add to List",
     "compare": "Compare",
     "noImage": "No image available"
+  },
+  "about": {
+    "backHome": "Back to Home",
+    "title": "About",
+    "subtitle": "We're on a mission to help smart shoppers save money by making price comparison simple, transparent, and accessible.",
+    "cards": {
+      "mission": {
+        "title": "Our Mission",
+        "text": "Empower shoppers with instant access to price comparisons across multiple stores, enabling informed purchasing decisions and maximum savings."
+      },
+      "approach": {
+        "title": "Our Approach",
+        "text": "We gather regularly updated pricing data from Greek supermarkets and present it in an easy-to-understand format."
+      },
+      "privacy": {
+        "title": "Privacy First",
+        "text": "PriceWise does not use accounts and does not store personal data. Shopping lists stay in your browser."
+      }
+    },
+    "features": {
+      "title": "Why Choose PriceWise?",
+      "items": {
+        "pricing": {
+          "title": "Updated Pricing",
+          "text": "Access current grocery prices from supported supermarkets, refreshed regularly."
+        },
+        "comparison": {
+          "title": "Easy Comparison",
+          "text": "Compare prices side by side and find the best available option."
+        },
+        "lists": {
+          "title": "Smart Shopping Lists",
+          "text": "Create a shopping list in your browser and email it to yourself when needed."
+        },
+        "free": {
+          "title": "Free to Use",
+          "text": "Use PriceWise without accounts, subscriptions, or hidden fees."
+        }
+      }
+    },
+    "cta": {
+      "title": "Ready to Start Saving?",
+      "text": "Start comparing grocery prices today and make smarter shopping decisions.",
+      "button": "Compare Prices Now"
+    }
   }
 }
