@@ -55,6 +55,10 @@ export default function Navbar() {
 
           {/* Desktop navigation */}
           <div className="hidden md:flex items-center gap-8">
+            <Link to="/compare-groups" className={navLinkClass("/compare-groups")}>
+              Group Compare
+            </Link>
+            
             <Link to="/" className={navLinkClass("/")}>
               {t("nav.compare")}
             </Link>
@@ -132,6 +136,14 @@ export default function Navbar() {
         {mobileOpen && (
           <div className="md:hidden pb-4">
             <div className="bg-white border border-brand-blue-darker/10 rounded-3xl shadow-sm p-4 space-y-3">
+              <Link
+                to="/compare-groups"
+                className={mobileNavLinkClass("/compare-groups")}
+                onClick={closeMobileMenu}
+              >
+                Group Compare
+              </Link>
+              
               <Link
                 to="/"
                 className={mobileNavLinkClass("/")}

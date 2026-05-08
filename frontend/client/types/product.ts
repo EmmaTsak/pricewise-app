@@ -5,7 +5,7 @@ export type Product = {
   productKey: string;
   price: number;
   supermarket: string;
-  category: string;
+  categoryName?: string | null;
   photoURL: string;
   url?: string;
   updatedAt: string;

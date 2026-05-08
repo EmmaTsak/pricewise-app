@@ -390,7 +390,7 @@ async function scrapeSubcategoryByPages(
             name: fullName,
             price,
             photoURL: image,
-            category: subcategory.name
+            categoryName: subcategory.name
           },
           create: {
             name: fullName,
@@ -398,7 +398,7 @@ async function scrapeSubcategoryByPages(
             photoURL: image,
             productKey,
             supermarket: SUPERMARKET,
-            category: subcategory.name
+            categoryName: subcategory.name
           }
         });
 
@@ -515,7 +515,7 @@ async function scrapeCategoryByPages(page: Page, category: AbCategory) {
             name: fullName,
             price,
             photoURL: image,
-            category: category.name
+            categoryName: category.name
           },
           create: {
             name: fullName,
@@ -523,7 +523,7 @@ async function scrapeCategoryByPages(page: Page, category: AbCategory) {
             photoURL: image,
             productKey,
             supermarket: SUPERMARKET,
-            category: category.name
+            categoryName: category.name
           }
         });
 

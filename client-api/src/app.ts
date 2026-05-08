@@ -9,9 +9,6 @@ const app = express();
 
 app.use(helmet());
 
-// Read allowed origins from environment variables.
-// Example:
-// CORS_ORIGINS=http://localhost:5173,https://pricewise.gr
 const allowedOrigins =
   process.env.CORS_ORIGINS?.split(",").map((origin) => origin.trim()) || [];
 

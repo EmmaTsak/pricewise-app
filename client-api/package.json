@@ -20,7 +20,9 @@
     "start": "node dist/server.js",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "group-products": "ts-node prisma/group-products.ts",
+    "reset-product-groups": "ts-node prisma/reset-product-groups.ts"
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",

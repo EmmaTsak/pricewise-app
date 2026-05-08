@@ -140,7 +140,7 @@ async function scrapeSubcategoryProducts(subcategory: LidlSubcategory) {
               name,
               price,
               photoURL: image,
-              category: subcategory.name
+              categoryName: subcategory.name
             },
             create: {
               name,
@@ -148,7 +148,7 @@ async function scrapeSubcategoryProducts(subcategory: LidlSubcategory) {
               photoURL: image,
               productKey,
               supermarket: SUPERMARKET,
-              category: subcategory.name
+              categoryName: subcategory.name
             }
           });
 
