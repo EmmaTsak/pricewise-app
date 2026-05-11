@@ -1,4 +1,10 @@
+export type ProductMetaCategory = {
+  id: string;
+  name: string;
+  slug: string;
+};
+
 export type ProductMeta = {
-  categories: string[];
+  categories: ProductMetaCategory[];
   supermarkets: string[];
 };

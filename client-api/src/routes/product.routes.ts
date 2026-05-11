@@ -10,22 +10,13 @@ import {
 
 const router = Router();
 
-// GET /products
-router.get('/', getProducts);
-
-// GET /products/compare-group/:groupId
-router.get('/compare-group/:groupId', compareProductGroupPrices);
-
-// GET /products/groups
-router.get("/groups", getProductGroups);
-
-// GET /products/meta
-router.get('/meta', getProductMeta);
-
-// POST /products
-router.post("/", createProduct);
-
+router.get("/meta", getProductMeta);
 router.get("/debug/groups", debugProductGroups);
+router.get("/groups", getProductGroups);
+router.get("/groups/:groupId/compare", compareProductGroupPrices);
+//router.get("/compare/:productKey", compareProductPrices);
+router.get("/", getProducts);
+router.post("/", createProduct);
 
 export default router;
 

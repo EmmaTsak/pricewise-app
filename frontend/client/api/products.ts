@@ -28,13 +28,20 @@ export const compareProductPrices = (productKey: string) => {
 export const getProductGroups = (params?: {
   search?: string;
   category?: string;
+  supermarkets?: string;
 }) => {
   return API.get<ProductGroup[]>("/products/groups", { params });
 };
 
-export const compareProductGroupPrices = (groupId: string) => {
+export const compareProductGroupPrices = (
+  groupId: string,
+  params?: {
+    supermarkets?: string;
+  }
+) => {
   return API.get<ProductGroupComparison>(
-    `/products/groups/${groupId}/compare`
+    `/products/groups/${groupId}/compare`,
+    { params }
   );
 };
 

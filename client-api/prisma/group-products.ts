@@ -5,7 +5,7 @@ import { calculateProductMatchPercentage } from "../src/utils/stringSimilarity";
 
 const prisma = new PrismaClient();
 
-const MATCH_THRESHOLD = 60;
+const MATCH_THRESHOLD = 70;
 
 type ProductForGrouping = {
   id: string;

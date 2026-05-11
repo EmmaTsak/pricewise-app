@@ -12,6 +12,7 @@ export type ProductGroup = {
   };
   lowestPrice: number | string | null;
   supermarketCount: number;
+  supermarkets: string[];
 };
 
 export type ProductGroupComparison = {
@@ -24,6 +25,7 @@ export type ProductGroupComparison = {
     name: string;
     slug: string;
   };
+  brand?: string | null;
   supermarketCount: number;
   products: Product[];
 };

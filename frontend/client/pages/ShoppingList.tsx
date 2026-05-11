@@ -135,7 +135,7 @@ export default function ShoppingList() {
                               </span>
 
                               <span className="text-sm text-gray-500">
-                                {item.category}
+                                {item.categoryName}
                               </span>
                             </div>
                           </div>

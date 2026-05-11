@@ -49,28 +49,54 @@
     "badge": "Smart grocery comparison",
     "title": "PriceWise",
     "subtitle": "Compare grocery prices across supermarkets",
+
+    "hero": {
+      "title": "Compare Grocery Prices",
+      "highlight": "Save Money, Smart Shopping",
+      "subtitle": "Find the best prices across multiple stores instantly. Compare prices, view savings, and make informed purchasing decisions."
+    },
+
+    "search": {
+      "placeholder": "Search for products... (e.g., Coca-Cola, milk, pasta)",
+      "searchingFor": "Searching for:"
+    },
+
     "filters": {
       "title": "Find the best prices",
       "subtitle": "Filter products by supermarket and category",
       "supermarket": "Supermarket",
       "category": "Category",
+      "categories": "Categories",
+      "stores": "Stores",
       "allSupermarkets": "All supermarkets",
-      "allCategories": "All categories"
+      "allCategories": "All Categories",
+      "apply": "Apply Filters",
+      "clear": "Clear All"
     },
+
     "states": {
       "loading": "Loading products...",
-      "empty": "No products found."
+      "empty": "No products found.",
+      "loadingComparable": "Loading comparable products...",
+      "noComparable": "No comparable products found. Try selecting at least two supermarkets or changing the category."
     },
+
+    "results": {
+      "showing": "Showing {{count}} comparable products"
+    },
+
     "compare": {
       "title": "Price Comparison",
       "close": "Close",
       "failed": "Failed to load comparison:",
       "subtitle": "Compare the same product across supermarkets",
       "bestDeal": "Best Deal",
-      "availablePrice": "Available price"
+      "availablePrice": "Available price",
+      "loading": "Loading comparison..."
     }
   },
   "nav": {
+    "home": "Home",
     "compare": "Compare Prices",
     "shoppingList": "Shopping List",
     "about": "About",
@@ -139,5 +165,25 @@
       "text": "Start comparing grocery prices today and make smarter shopping decisions.",
       "button": "Compare Prices Now"
     }
+  },
+  "categories": {
+    "fresh-food": "Fresh Food",
+    "meat-fish": "Meat & Fish",
+    "dairy-eggs": "Dairy & Eggs",
+    "bread-bakery": "Bread & Bakery",
+    "drinks": "Drinks",
+    "coffee-tea-cocoa": "Coffee, Tea & Cocoa",
+    "pantry": "Pantry",
+    "frozen-food": "Frozen Food",
+    "ready-meals": "Ready Meals",
+    "snacks-sweets": "Snacks & Sweets",
+    "baby": "Baby",
+    "pet": "Pet",
+    "health-beauty": "Health & Beauty",
+    "cleaning-household": "Cleaning & Household",
+    "home-garden": "Home & Garden",
+    "clothing": "Clothing",
+    "non-grocery": "Non Grocery",
+    "unknown": "Unknown"
   }
 }

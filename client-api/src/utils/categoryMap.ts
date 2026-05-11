@@ -3,423 +3,388 @@ export type PriceWiseCategory = {
   slug: string;
 };
 
-/*
-  These are PriceWise internal categories.
-
-  Important:
-  These do NOT need to be exactly the same as each supermarket category.
-
-  Supermarkets have many messy/different categories.
-  PriceWise needs clean broad categories so products can be compared.
-*/
 export const PRICEWISE_CATEGORIES: Record<string, PriceWiseCategory> = {
-  "fresh-food": {
-    name: "Fresh Food",
-    slug: "fresh-food",
-  },
-  "meat-fish": {
-    name: "Meat & Fish",
-    slug: "meat-fish",
-  },
-  "dairy-eggs": {
-    name: "Dairy & Eggs",
-    slug: "dairy-eggs",
-  },
-  "bread-bakery": {
-    name: "Bread & Bakery",
-    slug: "bread-bakery",
-  },
-  "drinks": {
-    name: "Drinks",
-    slug: "drinks",
-  },
-  "coffee-tea-cocoa": {
-    name: "Coffee, Tea & Cocoa",
-    slug: "coffee-tea-cocoa",
-  },
-  "pantry": {
-    name: "Pantry",
-    slug: "pantry",
-  },
-  "frozen-food": {
-    name: "Frozen Food",
-    slug: "frozen-food",
-  },
-  "ready-meals": {
-    name: "Ready Meals",
-    slug: "ready-meals",
-  },
-  "snacks-sweets": {
-    name: "Snacks & Sweets",
-    slug: "snacks-sweets",
-  },
-  "baby": {
-    name: "Baby",
-    slug: "baby",
-  },
-  "pet": {
-    name: "Pet",
-    slug: "pet",
-  },
-  "health-beauty": {
-    name: "Health & Beauty",
-    slug: "health-beauty",
-  },
-  "cleaning-household": {
-    name: "Cleaning & Household",
-    slug: "cleaning-household",
-  },
-  "home-garden": {
-    name: "Home & Garden",
-    slug: "home-garden",
-  },
-  "clothing": {
-    name: "Clothing",
-    slug: "clothing",
-  },
-  "non-grocery": {
-    name: "Non Grocery",
-    slug: "non-grocery",
-  },
-  "unknown": {
-    name: "Unknown",
-    slug: "unknown",
-  },
+  "fresh-food":        { name: "Fresh Food",           slug: "fresh-food" },
+  "meat-fish":         { name: "Meat & Fish",          slug: "meat-fish" },
+  "dairy-eggs":        { name: "Dairy & Eggs",         slug: "dairy-eggs" },
+  "bread-bakery":      { name: "Bread & Bakery",       slug: "bread-bakery" },
+  "drinks":            { name: "Drinks",               slug: "drinks" },
+  "coffee-tea-cocoa":  { name: "Coffee, Tea & Cocoa",  slug: "coffee-tea-cocoa" },
+  "pantry":            { name: "Pantry",               slug: "pantry" },
+  "frozen-food":       { name: "Frozen Food",          slug: "frozen-food" },
+  "ready-meals":       { name: "Ready Meals",          slug: "ready-meals" },
+  "snacks-sweets":     { name: "Snacks & Sweets",      slug: "snacks-sweets" },
+  "baby":              { name: "Baby",                 slug: "baby" },
+  "pet":               { name: "Pet",                  slug: "pet" },
+  "health-beauty":     { name: "Health & Beauty",      slug: "health-beauty" },
+  "cleaning-household":{ name: "Cleaning & Household", slug: "cleaning-household" },
+  "home-garden":       { name: "Home & Garden",        slug: "home-garden" },
+  "clothing":          { name: "Clothing",             slug: "clothing" },
+  "non-grocery":       { name: "Non Grocery",          slug: "non-grocery" },
+  "unknown":           { name: "Unknown",              slug: "unknown" },
 };
 
-/*
-  This function cleans Greek text so matching is easier.
+/**
+ * Normalise supermarket category names for matching.
+ * - lowercase, remove accents, final σ → σ
+ * - specific punctuation (- & /) become spaces
+ * - DELETE all remaining non‑letters (including invisible/zero‑width characters)
+ * - collapse spaces
+ */
+function normalizeCategoryText(value?: string | null): string {
+  if (!value) return "";
 
-  Example:
-  "Χυμοί & Αναψυκτικά"
-  becomes:
-  "χυμοι αναψυκτικα"
-*/
-function normalizeCategoryText(text: string) {
-  return text
+  return value
     .toLowerCase()
-
-    // Fix common HTML entity noise if it exists in scraped text.
-    .replace(/&[a-z0-9#]+;/gi, " ")
-
-    // Greek accent normalization.
-    .replace(/[ά]/g, "α")
-    .replace(/[έ]/g, "ε")
-    .replace(/[ήίϊΐ]/g, "ι")
-    .replace(/[ό]/g, "ο")
-    .replace(/[ύϋΰ]/g, "υ")
-    .replace(/[ώ]/g, "ω")
-
-    // Keep only letters, numbers and spaces.
-    .replace(/[^\p{L}\p{N}\s]/gu, " ")
-    .replace(/\s+/g, " ")
+    .normalize("NFD")                     // split letters from accents
+    .replace(/[\u0300-\u036f]/g, "")      // remove combining diacritics (tonos, etc.)
+    .replace(/[ς]/g, "σ")                 // final sigma → normal sigma
+    .replace(/[-&/]/g, " ")               // turn hyphens, &, / into spaces
+    .replace(/[^a-zα-ω0-9\s]/g, "")       // DELETE everything else (invisible chars, Latin specials, etc.)
+    .replace(/\s+/g, " ")                 // collapse multiple spaces
     .trim();
 }
 
-function includesAny(text: string, words: string[]) {
-  return words.some((word) => text.includes(word));
-}
-
 /*
-  Main category mapping.
+ * Keywords – all lower case, unaccented, only normal sigma (σ).
+ * The first category matching a keyword wins.
+ */
+const CATEGORY_KEYWORDS: Partial<Record<keyof typeof PRICEWISE_CATEGORIES, string[]>> = {
+  "fresh-food": [
+    "φρεσκα φρουτα",
+    "φρουτα",
+    "λαχανικα",
+    "μανιταρια"
+  ],
+  "meat-fish": [
+    "ετοιμες λυσεις κρεοπωλειου",
+    "κρεοπωλειου",
+    "κρεας",
+    "κοτοπουλο",
+    "πουλερικα",
+    "χοιρινο",
+    "μοσχαρι",
+    "αλλαντικα",
+    "ψαρια",
+    "θαλασσινα",
+    "ψαρι",
+    "νωπα κρεατα",
+    "κιμας",
+    "κατεψυγμενο κρεας",
+    "delicatessen θαλασσινων",
+    "θαλασσινων",
+    "οστρακοειδη",
+    "χταποδια",
+    "καλαμαρια",
+    "σουπιες",
+    "φρεσκα αρνια",
+    "κατσικια",
+    "φρεσκα παρασκευασματα κρεατων",
+    "παρασκευασματα κρεατων",
+    "ζαμπον",
+    "μπεικον",
+    "ωμοπλατη",
+    "λουκανικα",
+    "παριζα",
+    "μορταδελα",
+    "σαλαμια",
+    "πατε",
+    "foie gras",
+  ],
+  "dairy-eggs": [
+    "βουτυρο μαργαρινη",
+    "βουτυρο",
+    "βουτυρα",
+    "μαργαρινη",
+    "μαργαρινες",
+    "γαλα",
+    "γαλακτοκομικα",
+    "τυρια",
+    "τυρι",
+    "αυγα",
+    "γιαουρτι",
+    "γιαουρτια",
+    "κρεμα",
+    "επιδορπια",
+    "φυτικα ροφηματα",
+  ],
+  "bread-bakery": [
+    "ψωμι",
+    "αρτοσκευασματα",
+    "φρυγανιες",
+    "παξιμαδια",
+    "κριτσινια",
+    "μπισκοτα",
+    "κρουασαν",
+    "χαλβας",
+    "κουλουρια",
+    "πιτες",
+    "τορτιγιες",
+    "ζυμες νωπες",
+    "γλυκα",
+  ],
+  "drinks": [
+    "χυμοι",
+    "αναψυκτικα",
+    "νερα",
+    "νερο",
+    "ποτα",
+    "μπυρες",
+    "μπιρες",
+    "μηλιτες",
+    "κρασι",
+    "οινοπνευματωδη",
+    "ισοτονικα",
+    "ενεργειακα",
+  ],
+  "coffee-tea-cocoa": [
+    "καφεδες",
+    "καφες",
+    "τσαι",
+    "κακαο",
+    "σοκολατα ροφημα",
+  ],
+  "pantry": [
+    "ειδη ζαχαροπλαστικης",
+    "κρεμες γλυκισματα",
+    "μπαχαρικα αλατι",
+    "σαλατες αλοιφες",
+    "ζυμαρικα",
+    "μακαρονια",
+    "ρυζι",
+    "οσπρια",
+    "λαδι",
+    "ξυδι",
+    "κονσερβες",
+    "σπιτικες σαλτσες",
+    "σαλτσες",
+    "dressings",
+    "μπαχαρικα",
+    "αλευρι",
+    "ζαχαρη",
+    "μελι",
+    "μαρμελαδες",
+    "δημητριακα",
+    "ντελικατεσεν",
+    "μαγειρικη",
+    "πραλινα",
+    "αλατι",
+    "ζαχαροπλαστικης",
+    "κρεμες",
+    "γλυκισματα",
+    "αλοιφες",
+    "γευματα οσπριων",
+    "γευματα λαχανικων",
+    "ελιες",
+    "λαδερα",
+    "ντοματικα",
+    "ντοματα",
+    "τοματικα",
+    "τουρσια",
+    "λιαστες ντοματες",
+    "παστελια",
+    "μαντολατα",
+    "λουκουμια",
+    "χαλβαδες",
+    "μειγματα για ζελε",
+    "ζελε",
+    "μειγματα για γλυκα",
+    "ζωμοι ψυγειου",
+  ],
+   "frozen-food": [
+    "κατεψυγμενα",
+    "κατεψυγμενες",
+    "κατεψυγμενο",
+    "κατεψυγμενη",
+    "κατεψυγμενες πιτσες",
+    "παγωτα",
+    "χυμοι ψυγειου",
+    "χορτοφαγικες λυσεις",
+  ],
+   "ready-meals": [
+    "ετοιμα γευματα",
+    "ετοιμα φαγητα",
+    "ετοιμες σαλατες",
+    "ετοιμα σαντουιτς",
+    "σαντουιτς",
+    "σουπες",
+    "πιτσες",
+    "φυλλα πιτες",
+    "προετοιμασια τραπεζιου",
+  ],
+  "snacks-sweets": [
+    "σνακ",
+    "ζαχαρωδη",
+    "σοκολατες",
+    "καραμελες",
+    "τσιχλες",
+    "ξηροι καρποι",
+    "υγιεινη ζωη",
+  ],
+  "baby": [
+    "βρεφικη περιποιηση σωματος",
+    "βρεφικη περιποιηση",
+    "βρεφικες τροφες",
+    "βρεφικος",
+    "παιδικος",
+    "πανες",
+    "μωρου",
+    "αξεσουαρ για το μωρο",
+    "βρεφικα ρουχα",
+    "βρεφικος παιδικος εξοπλισμος",
+    "βρεφικα παιδικα καλλυντικα",
+    "βρεφικα παιδικα φαγητα",
+    "βρεφικα",
+    "παιδικα φαγητα",
+  ],
+  "pet": [
+    "τροφες κατοικιδιων",
+    "κατοικιδιο",
+    "κατοικιδια",
+    "για γατες",
+    "για σκυλους",
+    "λιχουδιες για κατοικιδια",
+    "ζωων",
+    "υγιεινη ζωων",
+  ],
+  "health-beauty": [
+    "ανδρικη περιποιηση",
+    "γυναικεια περιποιηση",
+    "μωρομαντηλα",
+    "φροντιδα σωματος",
+    "φροντιδα σωματοσ",
+    "υγεια",
+    "ομορφια",
+    "προσωπικη υγιεινη",
+    "φροντιδα μαλλιων",
+    "στοματικη υγιεινη",
+    "φροντιδα περιποιηση",
+    "αντηλιακα",
+    "ειδη ξυρισματος",
+    "after shave",
+    "μακιγιαζ",
+    "βερνικια νυχιων",
+    "παραφαρμακευτικα",
+    "παραφαρμακευτικα ειδη",
+    "υγιεινη περιποιηση προσωπου",
+    "περιποιηση προσωπου",
+    "πρωτεινες σε σκονη",
+  ],
+  "cleaning-household": [
+    "χαρτι οικιακης χρησης",
+    "χαρτι oικιακης χρησης",
+    "ειδη οικιακης χρησης",
+    "καθαρισμου",
+    "καθαριοτητα",
+    "καθαριστικα",
+    "απορρυπαντικα",
+    "πλυντηριου ρουχων",
+    "πιατων",
+    "αποθηκευση οργανωση",
+    "κουζινα σε τραπεζαρια",
+    "νοικοκυριο",
+    "πλυσιμο",
+    "σιδερωμα",
+    "οικιακης χρησης",
+    "αποθηκευση",
+    "οργανωση",
+    "μπανιο",
+    "κουζινα",
+    "τραπεζαρια",
+    "αρωματικα χωρου",
+    "συλλεκτες υγρασιας",
+    "φιλτρα απορροφητηρα",
+    "ειδη συντηρησης",
+    "ψησιματος τροφιμων",
+    "καλαμακια",
+    "οδοντογλυφιδες",
+    "σακουλες απορριμματων",
+    "σερβιτσια μιας χρησης",
+    "τσαντες πολλαπλων χρησεων",
+    "ισοθερμικες",
+    "φυλαξη περιποιηση ρουχων",
+    "περιποιηση ρουχων",
+    "χαρτικα",
+    "περιποιηση υποδηματων",
+  ],
+  "home-garden": [
+    "κηπος",
+    "μπαλκονι",
+    "φυτικα",
+    "διακοσμηση",
+    "εργαλεια",
+    "μπαταριας",
+    "εργαστηριου",
+    "χειρος",
+    "καμπινγκ",
+    "δραστηριοτητες",
+    "εξοπλισμος κηπου",
+    "κηπου",
+    "φωτιστικα",
+    "ειδη θυμιαματος",
+    "εντομοαπωθητικα",
+    "εντομοκτονα",
+    "θερμανση",
+    "κλιματισμος",
+    "κηπος μπαλκονι",
+    "φυτα",
+    "λουλουδια",
+  ],
+  "clothing": [
+    "ανδρικη ενδυση",
+    "γυναικεια μοδα",
+    "γυναικεια ενδυση",
+    "ρουχα",
+    "υποδηματα",
+    "ενδυση",
+  ],
+  "non-grocery": [
+    "θαλασσια σπορ",
+    "ομαδικα αθληματα",
+    "κυνηγι",
+    "ηλεκτρικα εργαλεια",
+    "ηλεκτρικες συσκευες",
+    "ηλεκτρικες μικροσυσκευες",
+    "εξοπλισμος εργαστηριου",
+    "συσκευες κουζινας",
+    "μπαταριες",
+    "σχολικα ειδη",
+    "παιχνιδια",
+    "αξεσουαρ",
+    "ειδη τεχνολογιας",
+    "τεχνολογιας",
+    "ειδη γυμναστικης",
+    "γυμναστικης",
+    "ειδη παρτι",
+    "ειδη υγραεριου",
+    "αναπτηρες",
+    "σπιρτα",
+    "καυσιμες υλες",
+    "τετραδια",
+    "μπλοκ",
+    "φακελοι",
+    "χαρτι φωτοτυπικο",
+    "εξοπλισμος εργασιας",
+    "υπνοδωματιο",
+  ],
+};
 
-  Instead of exact matching every category name,
-  we use keywords.
-
-  This is much better for your project because:
-  - AB, Lidl, Sklavenitis may use different category names
-  - some categories have broken encoded text
-  - new categories may appear later
-*/
 export function getPriceWiseCategory(supermarketCategoryName?: string | null) {
   if (!supermarketCategoryName) {
     return PRICEWISE_CATEGORIES["unknown"];
   }
 
-  const text = normalizeCategoryText(supermarketCategoryName);
+  const normalisedCategory = normalizeCategoryText(supermarketCategoryName);
 
-  // Fresh fruit / vegetables
-  if (
-    includesAny(text, [
-      "φρεσκα φρουτα",
-      "φρουτα",
-      "λαχανικα",
-      "μανιταρια",
-      "κηπος μπαλκονι",
-      "φυτα",
-      "λουλουδια",
-    ])
-  ) {
-    return PRICEWISE_CATEGORIES["fresh-food"];
-  }
+  for (const [slug, keywords] of Object.entries(CATEGORY_KEYWORDS)) {
+    if (!keywords) continue;
+    for (const keyword of keywords) {
+      const normalisedKeyword = normalizeCategoryText(keyword);
 
-  // Meat / fish / poultry
-  if (
-    includesAny(text, [
-      "κρεας",
-      "κοτοπουλο",
-      "πουλερικα",
-      "χοιρινο",
-      "μοσχαρι",
-      "αλλαντικα",
-      "ψαρια",
-      "θαλασσινα",
-      "ψαρι",
-      "νωπα κρεατα",
-    ])
-  ) {
-    return PRICEWISE_CATEGORIES["meat-fish"];
-  }
-
-  // Dairy / eggs / chilled desserts
-  if (
-    includesAny(text, [
-      "γαλα",
-      "γαλακτοκομικα",
-      "τυρια",
-      "τυρι",
-      "αυγα",
-      "βουτυρο",
-      "μαργαρινη",
-      "γιαουρτι",
-      "κρεμα",
-      "επιδορπια",
-      "φυτικα ροφηματα",
-    ])
-  ) {
-    return PRICEWISE_CATEGORIES["dairy-eggs"];
-  }
-
-  // Bread / bakery
-  if (
-    includesAny(text, [
-      "ψωμι",
-      "αρτοσκευασματα",
-      "φρυγανιες",
-      "παξιμαδια",
-      "κριτσινια",
-      "μπισκοτα",
-      "κρουασαν",
-      "χαλβας",
-    ])
-  ) {
-    return PRICEWISE_CATEGORIES["bread-bakery"];
-  }
-
-  // Drinks
-  if (
-    includesAny(text, [
-      "χυμοι",
-      "αναψυκτικα",
-      "νερα",
-      "νερο",
-      "ποτα",
-      "μπυρες",
-      "κρασι",
-      "οινοπνευματωδη",
-      "ισοτονικα",
-      "ενεργειακα",
-    ])
-  ) {
-    return PRICEWISE_CATEGORIES["drinks"];
-  }
-
-  // Coffee / tea / cocoa
-  if (
-    includesAny(text, [
-      "καφες",
-      "καφεδες",
-      "τσαϊ",
-      "τσαι",
-      "κακαο",
-      "σοκολατα ροφημα",
-    ])
-  ) {
-    return PRICEWISE_CATEGORIES["coffee-tea-cocoa"];
-  }
-
-  // Pantry: pasta, rice, legumes, oil, sauces, cans, spices
-  if (
-    includesAny(text, [
-      "ζυμαρικα",
-      "μακαρονια",
-      "ρυζι",
-      "οσπρια",
-      "λαδι",
-      "ξυδι",
-      "κονσερβες",
-      "σπιτικες σαλτσες",
-      "σαλτσες",
-      "dressings",
-      "μπαχαρικα",
-      "αλευρι",
-      "ζαχαρη",
-      "μελι",
-      "μαρμελαδες",
-      "δημητριακα",
-      "ντελικατεσεν",
-      "μαγειρικη",
-      "πραλινα",
-    ])
-  ) {
-    return PRICEWISE_CATEGORIES["pantry"];
-  }
-
-  // Frozen
-  if (
-    includesAny(text, [
-      "κατεψυγμενα",
-      "παγωτα",
-      "χυμοι ψυγειου",
-      "χορτοφαγικες λυσεις",
-    ])
-  ) {
-    return PRICEWISE_CATEGORIES["frozen-food"];
-  }
-
-  // Ready meals
-  if (
-    includesAny(text, [
-      "ετοιμα γευματα",
-      "ετοιμα φαγητα",
-      "ετοιμες σαλατες",
-      "ετοιμα σαντουιτς",
-      "σουπες",
-      "πιτσες",
-      "φυλλα πιτες",
-      "προετοιμασια τραπεζιου",
-    ])
-  ) {
-    return PRICEWISE_CATEGORIES["ready-meals"];
-  }
-
-  // Snacks / sweets
-  if (
-    includesAny(text, [
-      "σνακ",
-      "ζαχαρωδη",
-      "σοκολατες",
-      "καραμελες",
-      "τσίχλες",
-      "τσιχλες",
-      "ξηροι καρποι",
-      "υγιεινη ζωη",
-    ])
-  ) {
-    return PRICEWISE_CATEGORIES["snacks-sweets"];
-  }
-
-  // Baby
-  if (
-    includesAny(text, [
-      "βρεφικες τροφες",
-      "βρεφικος",
-      "παιδικος",
-      "πανες",
-      "μωρου",
-      "αξεσουαρ για το μωρο",
-      "βρεφικη περιποιηση",
-      "βρεφικα ρουχα",
-    ])
-  ) {
-    return PRICEWISE_CATEGORIES["baby"];
-  }
-
-  // Pet
-  if (
-    includesAny(text, [
-      "τροφες κατοικιδιων",
-      "κατοικιδιο",
-      "για γατες",
-      "για σκυλους",
-      "λιχουδιες για κατοικιδια",
-    ])
-  ) {
-    return PRICEWISE_CATEGORIES["pet"];
-  }
-
-  // Health / beauty / personal care
-  if (
-    includesAny(text, [
-      "υγεια",
-      "ομορφια",
-      "προσωπικη υγιεινη",
-      "φροντιδα σωματος",
-      "φροντιδα μαλλιων",
-      "στοματικη υγιεινη",
-      "θερμανση",
-      "φροντιδα περιποιηση",
-    ])
-  ) {
-    return PRICEWISE_CATEGORIES["health-beauty"];
-  }
-
-  // Cleaning / household
-  if (
-    includesAny(text, [
-      "χαρτι οικιακης χρησης",
-      "ειδη οικιακης χρησης",
-      "καθαρισμου",
-      "καθαριοτητα",
-      "απορρυπαντικα",
-      "πλυντηριου ρουχων",
-      "πιατων",
-      "αποθηκευση οργανωση",
-      "κουζινα σε τραπεζαρια",
-    ])
-  ) {
-    return PRICEWISE_CATEGORIES["cleaning-household"];
-  }
-
-  // Home / garden / tools
-  if (
-    includesAny(text, [
-      "κηπος",
-      "μπαλκονι",
-      "φυτικα",
-      "διακοσμηση",
-      "εργαλεια",
-      "μπαταριας",
-      "εργαστηριου",
-      "χειρος",
-      "καμπινγκ",
-      "δραστηριοτητες",
-      "ομαδικα αθληματα",
-      "ειδη γυμναστικης",
-    ])
-  ) {
-    return PRICEWISE_CATEGORIES["home-garden"];
-  }
-
-  // Clothing
-  if (
-    includesAny(text, [
-      "ανδρικη ενδυση",
-      "γυναικεια μοδα",
-      "γυναικεια ενδυση",
-      "ρουχα",
-      "υποδηματα",
-    ])
-  ) {
-    return PRICEWISE_CATEGORIES["clothing"];
-  }
-
-  // Non-grocery / equipment / electronics
-  if (
-    includesAny(text, [
-      "ηλεκτρικα εργαλεια",
-      "ηλεκτρικες συσκευες",
-      "εξοπλισμος εργαστηριου",
-      "εξοπλισμος κηπου",
-      "συσκευες κουζινας",
-      "εργαλεια μπαταριας",
-      "μπαταριες",
-      "σχολικα ειδη",
-      "παιχνιδια",
-      "αξεσουαρ",
-    ])
-  ) {
-    return PRICEWISE_CATEGORIES["non-grocery"];
+      if (normalisedCategory.includes(normalisedKeyword)) {
+        return PRICEWISE_CATEGORIES[slug as keyof typeof PRICEWISE_CATEGORIES];
+      }
+    }
   }
 
   return PRICEWISE_CATEGORIES["unknown"];

@@ -48,11 +48,31 @@ export const extractSize = (name: string) => {
     return null;
   }
 
-  const amount = match[1];
+  const amount = Number(match[1]);
   let unit = match[3];
 
   if (unit === "lt") unit = "l";
   if (unit === "gr") unit = "g";
+
+  /*
+    Convert kg to g.
+    Example:
+    0.5kg -> 500g
+    1kg -> 1000g
+  */
+  if (unit === "kg") {
+    return `${amount * 1000}g`;
+  }
+
+  /*
+    Convert litres to ml.
+    Example:
+    1l -> 1000ml
+    1.5l -> 1500ml
+  */
+  if (unit === "l") {
+    return `${amount * 1000}ml`;
+  }
 
   return `${amount}${unit}`;
 };
@@ -96,9 +116,21 @@ const STOP_WORDS = new Set([
   "φρεσκος",
   "ελληνικο",
   "ελληνικη",
-  "σπιτικό",
-  "σπιτική",
   "σπιτικο",
+  "σπιτικη",
+  "ab",
+  "αβ",
+  "σκλαβενιτης",
+  "lidl",
+  "galpo",
+  "γαλπο",
+  "kania",
+  "milbona",
+  "freshona",
+  "vitafit",
+  "mister",
+  "chocola",
+  "deluxe",
 ]);
 
 /*
@@ -166,15 +198,18 @@ const detectBrand = (words: string[]) => {
   }
 
   /*
-    Simple MVP rule:
-    For packaged products, the first word is often the brand.
+    Important MVP decision:
 
-    Examples:
-    "dove αποσμητικο"
-    "barilla σπαγγετι"
-    "ροδοπη λευκο τυρι"
+    We do NOT guess the brand from the first word anymore.
+
+    Why?
+    Because many product names start with words that are not reliable brands,
+    or with supermarket/private-label words.
+
+    If we guess the wrong brand, products from different stores almost never
+    group together.
   */
-  return firstWord ?? null;
+  return null;
 };
 
 export const getProductMatchData = (productName: string): ProductMatchData => {

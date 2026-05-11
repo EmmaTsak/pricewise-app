@@ -22,7 +22,9 @@
     "prisma:migrate": "prisma migrate dev",
     "test": "echo \"Error: no test specified\" && exit 1",
     "group-products": "ts-node prisma/group-products.ts",
-    "reset-product-groups": "ts-node prisma/reset-product-groups.ts"
+    "reset-product-groups": "ts-node prisma/reset-product-groups.ts",
+    "check-categories": "ts-node prisma/check-categories.ts",
+    "check-groups": "ts-node prisma/check-groups.ts"
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",

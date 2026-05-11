@@ -1,12 +1,12 @@
 export type Product = {
   id: string;
   name: string;
-  brand?: string;
+  brand?: string | null;
   productKey: string;
-  price: number;
+  price: number | string;
   supermarket: string;
   categoryName?: string | null;
-  photoURL: string;
-  url?: string;
+  photoURL?: string | null;
+  url?: string | null;
   updatedAt: string;
 };

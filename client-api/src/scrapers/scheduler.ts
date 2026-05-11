@@ -1,6 +1,7 @@
 import cron from "node-cron";
 import { scrapeLidl } from "./lidl.scraper";
 import { scrapeAB } from "./ab.scraper";
+import { scrapeSklavenitis } from "./sklavenitis.scraper";
 
 let isRunning = false;
 
@@ -14,8 +15,10 @@ export const runAllScrapers = async () => {
     isRunning = true;
     console.log("Starting scraper run...");
 
+    await scrapeSklavenitis();
     await scrapeLidl();
     await scrapeAB();
+
 
     console.log("Scraper run completed.");
   } catch (error) {

@@ -15,6 +15,7 @@ const getSingleQueryValue = (value: unknown): string | undefined => {
   return undefined;
 };
 
+// GET /products
 export const getProducts = async (req: Request, res: Response) => {
   try {
     const cacheKey = JSON.stringify(req.query);
@@ -55,28 +56,41 @@ export const getProducts = async (req: Request, res: Response) => {
 };
 
 // GET /products/meta
-export const getProductMeta = async (req: Request, res: Response) => {
+export const getProductMeta = async (_req: Request, res: Response) => {
   try {
-    const categories = await prisma.product.findMany({
+    /*
+      These are clean PriceWise categories created by categoryMap.ts
+      after running the grouping script.
+    */
+    const categories = await prisma.category.findMany({
       select: {
-        categoryName: true,
+        id: true,
+        name: true,
+        slug: true,
       },
-      distinct: ["categoryName"],
+      orderBy: {
+        name: "asc",
+      },
     });
 
+    /*
+      Supermarkets still come from products.
+      This means if you add more supermarkets later,
+      they appear automatically.
+    */
     const supermarkets = await prisma.product.findMany({
       select: {
         supermarket: true,
       },
       distinct: ["supermarket"],
+      orderBy: {
+        supermarket: "asc",
+      },
     });
 
     res.json({
-      categories: categories
-        .map((c: { categoryName: string | null }) => c.categoryName)
-        .filter(Boolean),
-
-      supermarkets: supermarkets.map((s: { supermarket: string }) => s.supermarket),
+      categories,
+      supermarkets: supermarkets.map((s) => s.supermarket),
     });
   } catch (error) {
     console.error(error);
@@ -86,6 +100,7 @@ export const getProductMeta = async (req: Request, res: Response) => {
   }
 };
 
+// POST /products
 export const createProduct = async (req: Request, res: Response) => {
   try {
     const {
@@ -145,22 +160,33 @@ export const createProduct = async (req: Request, res: Response) => {
 // GET /products/groups
 export const getProductGroups = async (req: Request, res: Response) => {
   try {
-    const { search, category } = req.query;
+    const search = getSingleQueryValue(req.query.search);
+    const category = getSingleQueryValue(req.query.category);
+    const supermarketsQuery = getSingleQueryValue(req.query.supermarkets);
+
+    /*
+      supermarketsQuery example:
+      "AB,Lidl,Sklavenitis"
+    */
+    const selectedSupermarkets = supermarketsQuery
+      ? supermarketsQuery
+          .split(",")
+          .map((supermarket) => supermarket.trim())
+          .filter(Boolean)
+      : [];
 
     const groups = await prisma.productGroup.findMany({
       where: {
-        // Search by group name, for example "coca"
         name: search
           ? {
-              contains: String(search),
+              contains: search,
               mode: "insensitive",
             }
           : undefined,
 
-        // Optional category filter, for example "soft-drinks"
         category: category
           ? {
-              slug: String(category),
+              slug: category,
             }
           : undefined,
       },
@@ -180,52 +206,53 @@ export const getProductGroups = async (req: Request, res: Response) => {
       orderBy: {
         name: "asc",
       },
-      take: 100,
+      take: 9000,
     });
 
-    /*
-      We only want groups that are useful for comparison.
-
-      A group is useful if it has products from at least
-      2 different supermarkets.
-    */
     const comparableGroups = groups
-      .map(
-        (group: {
-          id: string | number;
-          name: string;
-          size: number;
-          imageUrl: string | null;
-          category: {
-            id: string | number;
-            name: string;
-            slug: string;
-          };
-          products: {
-            supermarket: string;
-            price: number;
-          }[];
-        }) => {
-          const supermarkets = new Set(
-            group.products.map((product) => product.supermarket)
-          );
+      .map((group) => {
+        /*
+          If the user selected stores, we only keep products from those stores.
+          If not, we keep all products.
+        */
+        const visibleProducts =
+          selectedSupermarkets.length > 0
+            ? group.products.filter((product) =>
+                selectedSupermarkets.includes(product.supermarket)
+              )
+            : group.products;
 
-          return {
-            id: group.id,
-            name: group.name,
-            size: group.size,
-            imageUrl: group.imageUrl,
-            category: {
-              id: group.category.id,
-              name: group.category.name,
-              slug: group.category.slug,
-            },
-            lowestPrice: group.products[0]?.price ?? null,
-            supermarketCount: supermarkets.size,
-          };
-        }
-      )
-      .filter((group: { supermarketCount: number }) => group.supermarketCount >= 2);
+        /*
+          Sort the visible products by price.
+
+          Why?
+          Because lowestPrice should always come from the cheapest visible product,
+          not just the first product in the array.
+        */
+        const sortedVisibleProducts = [...visibleProducts].sort((a, b) => {
+          return Number(a.price) - Number(b.price);
+        });
+
+        const supermarkets = new Set(
+          sortedVisibleProducts.map((product) => product.supermarket)
+        );
+
+        return {
+          id: group.id,
+          name: group.name,
+          size: group.size,
+          imageUrl: group.imageUrl,
+          category: {
+            id: group.category.id,
+            name: group.category.name,
+            slug: group.category.slug,
+          },
+          lowestPrice: sortedVisibleProducts[0]?.price ?? null,
+          supermarketCount: supermarkets.size,
+          supermarkets: Array.from(supermarkets),
+        };
+      })
+      .filter((group) => group.supermarketCount >= 2);
 
     res.json(comparableGroups);
   } catch (error) {
@@ -251,9 +278,18 @@ export const compareProductGroupPrices = async (
       });
     }
 
+    const supermarketsQuery = getSingleQueryValue(req.query.supermarkets);
+
+    const selectedSupermarkets = supermarketsQuery
+      ? supermarketsQuery
+          .split(",")
+          .map((supermarket) => supermarket.trim())
+          .filter(Boolean)
+      : [];
+
     const group = await prisma.productGroup.findUnique({
       where: {
-        id: groupId,
+        id: groupId as string,
       },
       include: {
         category: true,
@@ -293,6 +329,16 @@ export const compareProductGroupPrices = async (
     >();
 
     for (const product of group.products) {
+      /*
+        If user selected supermarkets, only show those.
+      */
+      if (
+        selectedSupermarkets.length > 0 &&
+        !selectedSupermarkets.includes(product.supermarket)
+      ) {
+        continue;
+      }
+
       if (!cheapestBySupermarket.has(product.supermarket)) {
         cheapestBySupermarket.set(product.supermarket, product);
       }
