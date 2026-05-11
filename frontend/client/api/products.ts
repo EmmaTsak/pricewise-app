@@ -19,12 +19,6 @@ export const getProductMeta = () => {
   return API.get<ProductMeta>("/products/meta");
 };
 
-// Old endpoint. We will stop using this for real comparison.
-export const compareProductPrices = (productKey: string) => {
-  return API.get(`/products/compare/${productKey}`);
-};
-
-// New group-based comparison endpoints.
 export const getProductGroups = (params?: {
   search?: string;
   category?: string;
