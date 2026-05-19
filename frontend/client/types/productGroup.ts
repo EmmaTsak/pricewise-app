@@ -5,6 +5,7 @@ export type ProductGroup = {
   name: string;
   size?: string | null;
   imageUrl?: string | null;
+  productImages?: (string | null)[];
   category: {
     id: string;
     name: string;

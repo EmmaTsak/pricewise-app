@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { Database, Lock, Mail, ShieldCheck, UserX } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
@@ -234,7 +235,7 @@ export default function PrivacyPolicy() {
 
 type PolicySectionProps = {
   title: string;
-  children: React.ReactNode;
+  children: ReactNode;
 };
 
 function PolicySection({ title, children }: PolicySectionProps) {

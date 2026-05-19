@@ -1,47 +1,59 @@
+import { useMemo, useState } from "react";
 import { ImageOff } from "lucide-react";
-import { useState } from "react";
-import { useTranslation } from "react-i18next";
 
 type ProductImageProps = {
   src?: string | null;
   alt: string;
   className?: string;
   imgClassName?: string;
+  fallbackSources?: (string | null | undefined)[];
 };
 
 export default function ProductImage({
   src,
   alt,
   className = "",
-  imgClassName = "",
+  imgClassName,
+  fallbackSources = [],
 }: ProductImageProps) {
-  const { t } = useTranslation();
-  const [hasError, setHasError] = useState(false);
+  const imageSources = useMemo(() => {
+    const allSources = [src, ...fallbackSources];
 
-  const showFallback = !src || hasError;
+    return allSources.filter(
+      (source): source is string =>
+        typeof source === "string" && source.trim().length > 0
+    );
+  }, [src, fallbackSources]);
 
-  if (showFallback) {
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+
+  const currentImage = imageSources[currentImageIndex];
+
+  const handleImageError = () => {
+    const nextImageIndex = currentImageIndex + 1;
+
+    if (nextImageIndex < imageSources.length) {
+      setCurrentImageIndex(nextImageIndex);
+    }
+  };
+
+  if (!currentImage) {
     return (
       <div
-        className={`flex items-center justify-center bg-gradient-to-br from-white to-brand-cyan/10 ${className}`}
+        className={`flex items-center justify-center rounded-xl bg-gray-100 text-gray-400 ${className}`}
       >
-        <div className="flex flex-col items-center gap-2 text-gray-400">
-          <ImageOff size={22} />
-          <span className="text-xs text-center">
-            {t("product.noImage")}
-          </span>
-        </div>
+        <ImageOff size={28} />
       </div>
     );
   }
 
   return (
     <img
-      src={src}
+      src={currentImage}
       alt={alt}
+      className={imgClassName ?? className}
+      onError={handleImageError}
       loading="lazy"
-      onError={() => setHasError(true)}
-      className={`max-w-full ${imgClassName}`}
     />
   );
 }

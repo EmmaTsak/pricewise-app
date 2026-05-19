@@ -59,25 +59,66 @@ export const getProducts = async (req: Request, res: Response) => {
 export const getProductMeta = async (_req: Request, res: Response) => {
   try {
     /*
-      These are clean PriceWise categories created by categoryMap.ts
-      after running the grouping script.
+      We only want categories that have useful comparison groups.
+
+      A useful group means:
+      - the group exists
+      - it has products from at least 2 different supermarkets
+
+      Example:
+      If "Milk" has AB + Lidl products, show the Milk category.
+      If "Pizza" only has Galaxias products, do not show that category yet.
     */
-    const categories = await prisma.category.findMany({
+    const groups = await prisma.productGroup.findMany({
       select: {
-        id: true,
-        name: true,
-        slug: true,
-      },
-      orderBy: {
-        name: "asc",
+        category: {
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+          },
+        },
+        products: {
+          select: {
+            supermarket: true,
+          },
+        },
       },
     });
 
     /*
-      Supermarkets still come from products.
-      This means if you add more supermarkets later,
-      they appear automatically.
+      We use a Map so each category appears only once.
+
+      Without this, if one category has 50 groups,
+      the category could appear 50 times.
     */
+    const categoryMap = new Map<
+      string,
+      {
+        id: string;
+        name: string;
+        slug: string;
+      }
+    >();
+
+    for (const group of groups) {
+      const supermarkets = new Set(
+        group.products.map((product) => product.supermarket)
+      );
+
+      /*
+        Only keep the category if this group has products
+        from at least 2 supermarkets.
+      */
+      if (supermarkets.size >= 2) {
+        categoryMap.set(group.category.slug, group.category);
+      }
+    }
+
+    const categories = Array.from(categoryMap.values()).sort((a, b) =>
+      a.name.localeCompare(b.name)
+    );
+
     const supermarkets = await prisma.product.findMany({
       select: {
         supermarket: true,
@@ -197,6 +238,7 @@ export const getProductGroups = async (req: Request, res: Response) => {
             id: true,
             supermarket: true,
             price: true,
+            photoURL: true,
           },
           orderBy: {
             price: "asc",
@@ -242,6 +284,7 @@ export const getProductGroups = async (req: Request, res: Response) => {
           name: group.name,
           size: group.size,
           imageUrl: group.imageUrl,
+          productImages: sortedVisibleProducts.map((product) => product.photoURL),
           category: {
             id: group.category.id,
             name: group.category.name,

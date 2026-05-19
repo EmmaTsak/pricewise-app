@@ -39,6 +39,14 @@ export const compareProductGroupPrices = (
   );
 };
 
-export const sendShoppingListEmail = (email: string, items: unknown[]) => {
-  return API.post("/email-list", { email, items });
+export const sendShoppingListEmail = (
+  email: string,
+  items: unknown[],
+  language: string
+) => {
+  return API.post("/email-list", {
+    email,
+    items,
+    language,
+  });
 };

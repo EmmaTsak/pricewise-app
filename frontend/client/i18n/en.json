@@ -1,23 +1,61 @@
 {
   "privacy": {
-    "title": "Privacy Policy",
+    "badge": "Privacy Policy",
+    "title": "Your privacy matters",
+    "highlight": "simple, transparent, minimal",
+    "subtitle": "PriceWise is designed as a privacy-friendly grocery comparison app. It does not use user accounts and avoids storing unnecessary personal information.",
+
+    "points": {
+      "noAccounts": {
+        "title": "No user accounts",
+        "description": "PriceWise does not require registration, login, usernames, or passwords."
+      },
+      "localStorage": {
+        "title": "Shopping list stays local",
+        "description": "Your shopping list is stored in your browser using localStorage, not in a user account."
+      },
+      "emailConsent": {
+        "title": "Email only with consent",
+        "description": "Your email is used only when you choose to send your shopping list and confirm consent."
+      },
+      "minimalData": {
+        "title": "Minimal data approach",
+        "description": "The application is designed to avoid collecting unnecessary personal data."
+      }
+    },
+
     "sections": {
-      "what": {
-        "title": "1. What PriceWise does",
-        "text": "PriceWise helps users compare grocery prices across supermarkets and create shopping lists."
+      "dataWeCollect": {
+        "title": "1. Data we collect",
+        "text": "PriceWise does not collect personal data through user accounts because the application does not include registration or login functionality.",
+        "email": "If you choose to email your shopping list to yourself, the email address you provide is used only for sending that message."
       },
-      "accounts": {
-        "title": "2. No user accounts",
-        "text": "PriceWise does not require user registration and does not create user accounts."
-      },
-      "storage": {
-        "title": "3. Shopping list storage",
-        "text": "Your shopping list is stored only in your browser using localStorage."
+      "localStorage": {
+        "title": "2. Local shopping list storage",
+        "text": "The shopping list is stored in your browser using localStorage. This means the list remains on your device and is not connected to a user profile."
       },
       "email": {
-        "title": "4. Email usage",
-        "text": "Your email is used only to send your shopping list and is not stored."
+        "title": "3. Email consent",
+        "text": "Before sending a shopping list by email, PriceWise asks for consent. The email feature is optional and only runs when you choose to use it."
+      },
+      "cookies": {
+        "title": "4. Cookies and tracking",
+        "text": "PriceWise does not require tracking cookies for core functionality. Any future analytics or optional tracking tools should be clearly explained and require appropriate consent where necessary."
+      },
+      "thirdParty": {
+        "title": "5. Third-party services",
+        "text": "PriceWise may use supermarket product pages as data sources and may use email delivery tools such as Nodemailer for sending shopping lists. These tools are used only for the app's intended functionality."
+      },
+      "rights": {
+        "title": "6. Your rights",
+        "text": "Because PriceWise does not use user accounts, there is no account profile to delete. You can clear your shopping list at any time by removing it inside the app or clearing your browser storage."
       }
+    },
+
+    "side": {
+      "title": "Your privacy is important",
+      "text": "PriceWise only uses the information needed for the app to work properly.",
+      "note": "If new features are added in the future, this privacy policy will be updated so you can clearly understand how your data is used."
     }
   },
   "shoppingList": {
@@ -122,7 +160,6 @@
     "noImage": "No image available"
   },
   "about": {
-    "backHome": "Back to Home",
     "title": "About",
     "subtitle": "We're on a mission to help smart shoppers save money by making price comparison simple, transparent, and accessible.",
     "cards": {
@@ -167,7 +204,7 @@
     }
   },
   "categories": {
-    "fresh-food": "Fresh Food",
+    "fruits-vegetables": "Fruits & Vegetables",
     "meat-fish": "Meat & Fish",
     "dairy-eggs": "Dairy & Eggs",
     "bread-bakery": "Bread & Bakery",
@@ -185,5 +222,25 @@
     "clothing": "Clothing",
     "non-grocery": "Non Grocery",
     "unknown": "Unknown"
+  },
+  "stores": {
+    "AB": "AB Vasilopoulos",
+    "Lidl": "Lidl",
+    "Sklavenitis": "Sklavenitis",
+    "Galaxias": "Galaxias"
+  },
+  "comparisonModal": {
+    "comparedAcross": "Compared across {{count}} supermarket",
+    "comparedAcross_plural": "Compared across {{count}} supermarkets",
+    "close": "Close comparison",
+    "bestPrice": "Best price",
+    "viewProduct": "View product",
+    "added": "Added",
+    "addToList": "Add to list"
+  },
+  "productGroupCard": {
+    "fromPrice": "From €{{price}}",
+    "availableIn": "Available in {{count}} supermarket",
+    "availableIn_plural": "Available in {{count}} supermarkets"
   }
 }

@@ -1,4 +1,5 @@
-import { ShoppingCart, X } from "lucide-react";
+import { ShoppingCart, Trash2, X } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import type { ProductGroupComparison } from "../types/productGroup";
 import { useShoppingList } from "../context/ShoppingListContext";
 
@@ -11,7 +12,8 @@ export default function ComparisonModal({
   comparison,
   onClose,
 }: ComparisonModalProps) {
-  const { addItem, items } = useShoppingList();
+  const { t } = useTranslation();
+  const { addItem, removeItem, items } = useShoppingList();
 
   if (!comparison) {
     return null;
@@ -23,8 +25,14 @@ export default function ComparisonModal({
       : null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-hidden">
+    <div
+      className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4"
+      onClick={onClose}
+    >
+      <div
+        className="bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-hidden"
+        onClick={(event) => event.stopPropagation()}
+      >
         <div className="flex items-start justify-between gap-4 p-5 border-b">
           <div>
             <h2 className="text-xl font-bold text-gray-900">
@@ -32,12 +40,16 @@ export default function ComparisonModal({
             </h2>
 
             <p className="text-sm text-gray-500 mt-1">
-              Compared across {comparison.supermarketCount} supermarkets
+              {t("comparisonModal.comparedAcross", {
+                count: comparison.supermarketCount,
+              })}
             </p>
           </div>
 
           <button
+            type="button"
             onClick={onClose}
+            aria-label={t("comparisonModal.close")}
             className="w-9 h-9 rounded-full border flex items-center justify-center hover:bg-gray-100"
           >
             <X size={18} />
@@ -49,6 +61,9 @@ export default function ComparisonModal({
             {comparison.products.map((product) => {
               const price = Number(product.price);
               const isBestPrice = bestPrice !== null && price === bestPrice;
+              const isAlreadyAdded = items.some(
+                (item) => item.id === product.id
+              );
 
               return (
                 <div
@@ -63,12 +78,14 @@ export default function ComparisonModal({
                     <div>
                       <div className="flex items-center gap-2">
                         <h3 className="font-semibold text-gray-900">
-                          {product.supermarket}
+                          {t(`stores.${product.supermarket}`, {
+                            defaultValue: product.supermarket,
+                          })}
                         </h3>
 
                         {isBestPrice && (
                           <span className="text-xs bg-green-600 text-white px-2 py-1 rounded-full">
-                            Best price
+                            {t("comparisonModal.bestPrice")}
                           </span>
                         )}
                       </div>
@@ -84,30 +101,40 @@ export default function ComparisonModal({
                           rel="noreferrer"
                           className="text-sm text-blue-600 hover:underline mt-2 inline-block"
                         >
-                          View product
+                          {t("comparisonModal.viewProduct")}
                         </a>
                       )}
                     </div>
 
-                    <div className="flex flex-col items-end gap-3">
-                      <p className="text-2xl font-bold text-green-600">
-                        €{product.price}
-                      </p>
-
-                      <button
-                        type="button"
-                        onClick={() => addItem(product)}
-                        disabled={items.some((item) => item.id === product.id)}
-                        className="inline-flex items-center gap-2 rounded-xl bg-brand-blue-darker px-3 py-2 text-sm font-medium text-white hover:bg-brand-blue-dark disabled:cursor-not-allowed disabled:bg-gray-300"
-                      >
-                        <ShoppingCart size={16} />
-
-                        {items.some((item) => item.id === product.id)
-                          ? "Added"
-                          : "Add to list"}
-                      </button>
-                    </div>
+                                        <p className="text-2xl font-bold text-green-600 whitespace-nowrap">
+                      €{price.toFixed(2)}
+                    </p>
                   </div>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (isAlreadyAdded) {
+                        removeItem(product.id);
+                        return;
+                      }
+
+                      addItem(product);
+                    }}
+                    className={`mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl px-3 py-2 text-sm font-medium text-white transition-shadow hover:shadow-lg ${
+                      isAlreadyAdded
+                        ? "bg-red-600 hover:bg-red-700"
+                        : "bg-gradient-to-r from-brand-green to-brand-teal"
+                    }`}
+                  >
+                    {isAlreadyAdded ? (
+                      <Trash2 size={16} />
+                    ) : (
+                      <ShoppingCart size={16} />
+                    )}
+
+                    {isAlreadyAdded ? "Remove from list" : "Add to list"}
+                  </button>
                 </div>
               );
             })}

@@ -10,7 +10,7 @@ type ShoppingListItem = {
 
 export const sendShoppingList = async (req: Request, res: Response) => {
   try {
-    const { email, items } = req.body;
+    const { email, items, language } = req.body;
 
     if (!email || typeof email !== "string") {
       return res.status(400).json({
@@ -32,16 +32,41 @@ export const sendShoppingList = async (req: Request, res: Response) => {
       });
     }
 
+    const selectedLanguage = language === "el" ? "el" : "en";
+
     if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
       return res.status(500).json({
         error: "Email service is not configured correctly.",
       });
     }
 
+    const translations = {
+      en: {
+        subject: "Your Shopping List",
+        intro: "Here is your shopping list:",
+        footer:
+          "This email was sent because you requested it in PriceWise.\n" +
+          "PriceWise does not store your email address.",
+        unnamedItem: "Unnamed item",
+        unknownSupermarket: "Unknown supermarket",
+      },
+      el: {
+        subject: "Η λίστα αγορών σας",
+        intro: "Αυτή είναι η λίστα αγορών σας:",
+        footer:
+          "Αυτό το email στάλθηκε επειδή το ζητήσατε μέσα από το PriceWise.\n" +
+          "Το PriceWise δεν αποθηκεύει τη διεύθυνση email σας.",
+        unnamedItem: "Προϊόν χωρίς όνομα",
+        unknownSupermarket: "Άγνωστο σούπερ μάρκετ",
+      },
+    };
+
+    const emailText = translations[selectedLanguage];
+
     const listText = items
       .map((item: ShoppingListItem) => {
-        const name = item.name ?? "Unnamed item";
-        const supermarket = item.supermarket ?? "Unknown supermarket";
+        const name = item.name ?? emailText.unnamedItem;
+        const supermarket = item.supermarket ?? emailText.unknownSupermarket;
         const price = item.price ?? "-";
 
         return `• ${name} (${supermarket}) - €${price}`;
@@ -51,11 +76,8 @@ export const sendShoppingList = async (req: Request, res: Response) => {
     await mailTransporter.sendMail({
       from: `"PriceWise" <${process.env.EMAIL_USER}>`,
       to: receiverEmail,
-      subject: "Your Shopping List",
-      text:
-        `Here is your shopping list:\n\n${listText}\n\n` +
-        `This email was sent because you requested it in PriceWise.\n` +
-        `PriceWise does not store your email address.`,
+      subject: emailText.subject,
+      text: `${emailText.intro}\n\n${listText}\n\n${emailText.footer}`,
     });
 
     return res.status(200).json({

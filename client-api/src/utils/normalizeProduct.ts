@@ -54,22 +54,10 @@ export const extractSize = (name: string) => {
   if (unit === "lt") unit = "l";
   if (unit === "gr") unit = "g";
 
-  /*
-    Convert kg to g.
-    Example:
-    0.5kg -> 500g
-    1kg -> 1000g
-  */
   if (unit === "kg") {
     return `${amount * 1000}g`;
   }
 
-  /*
-    Convert litres to ml.
-    Example:
-    1l -> 1000ml
-    1.5l -> 1500ml
-  */
   if (unit === "l") {
     return `${amount * 1000}ml`;
   }
@@ -81,10 +69,6 @@ const removeSize = (text: string) => {
   return text.replace(/(\d+(\.\d+)?)\s?(l|lt|ml|kg|g|gr)/g, "");
 };
 
-/*
-  These words often appear in product titles,
-  but they usually do not identify the exact product.
-*/
 const STOP_WORDS = new Set([
   "αναψυκτικο",
   "ροφημα",

@@ -290,7 +290,9 @@ export default function Index() {
                           htmlFor={supermarket}
                           className="ml-2 text-sm text-gray-700 cursor-pointer"
                         >
-                          {supermarket}
+                          {t(`stores.${supermarket}`, {
+                            defaultValue: supermarket,
+                          })}
                         </label>
                       </div>
                     ))}

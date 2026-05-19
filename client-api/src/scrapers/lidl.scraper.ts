@@ -1,28 +1,16 @@
 import axios from "axios";
 import * as cheerio from "cheerio";
-import prisma from "../config/prisma";
 import { getIO } from "../sockets/socket";
+import {
+  upsertProductsInBatches,
+  ScrapedProductForSave
+} from "../utils/scraperPerformance";
+import { slugify } from "../utils/scraperCommon";
 
 const SUPERMARKET = "Lidl";
+const BASE_URL = "https://www.lidl-hellas.gr";
 const ROOT_CATEGORY_URL = "/c/fagito-poto/s10068374";
-const FETCH_SIZE = 12;
-
-const lidlApi = axios.create({
-  baseURL: "https://www.lidl-hellas.gr",
-  timeout: 10000,
-  headers: {
-    "User-Agent":
-      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/122.0.0.0 Safari/537.36"
-  }
-});
-
-function slugify(text: string) {
-  return text
-    .toLowerCase()
-    .trim()
-    .replace(/[^\p{L}\p{N}\s-]/gu, "")
-    .replace(/\s+/g, "-");
-}
+const FETCH_SIZE = 48;
 
 type LidlSubcategory = {
   id: string;
@@ -30,16 +18,44 @@ type LidlSubcategory = {
   url: string;
 };
 
+const lidlApi = axios.create({
+  baseURL: BASE_URL,
+  timeout: 15000,
+  headers: {
+    "User-Agent":
+      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/122.0.0.0 Safari/537.36"
+  }
+});
+
+function extractLidlProductUrl(data: any): string | null {
+  const possibleUrl =
+    data.url ||
+    data.link ||
+    data.canonicalPath ||
+    data.detailUrl ||
+    data.productUrl ||
+    null;
+
+  if (!possibleUrl) {
+    return null;
+  }
+
+  try {
+    return new URL(possibleUrl, BASE_URL).toString();
+  } catch {
+    return null;
+  }
+}
+
 async function getLidlSubcategories(): Promise<LidlSubcategory[]> {
   const response = await lidlApi.get(ROOT_CATEGORY_URL);
   const html = response.data as string;
 
   const $ = cheerio.load(html);
+
   const subcategories: LidlSubcategory[] = [];
   const seenIds = new Set<string>();
 
-  // Look for links that point to subcategory pages like:
-  // /h/freska-froyta-lachanika/h10071012
   $("a[href*='/h/']").each((_, element) => {
     const href = $(element).attr("href");
     if (!href) return;
@@ -49,7 +65,6 @@ async function getLidlSubcategories(): Promise<LidlSubcategory[]> {
 
     const subcategoryId = match[1];
 
-    // Try to get the visible text from the link
     const name = $(element).text().replace(/\s+/g, " ").trim();
 
     if (!name) return;
@@ -69,8 +84,9 @@ async function getLidlSubcategories(): Promise<LidlSubcategory[]> {
 
 async function scrapeSubcategoryProducts(subcategory: LidlSubcategory) {
   let offset = 0;
-  let saved = 0;
   let skipped = 0;
+
+  const productsToSave: ScrapedProductForSave[] = [];
 
   console.log(
     `\nScraping Lidl subcategory: ${subcategory.name} (${subcategory.id})`
@@ -112,6 +128,7 @@ async function scrapeSubcategoryProducts(subcategory: LidlSubcategory) {
           const name = data.title?.trim();
           const rawPrice = data.price?.price;
           const image = data.image ?? null;
+          const productUrl = extractLidlProductUrl(data);
 
           if (!name || rawPrice == null) {
             skipped++;
@@ -120,43 +137,27 @@ async function scrapeSubcategoryProducts(subcategory: LidlSubcategory) {
 
           const price = Number(rawPrice);
 
-          if (Number.isNaN(price)) {
+          if (Number.isNaN(price) || price <= 0) {
             skipped++;
             continue;
           }
 
-          // Product key includes supermarket + subcategory + name
-          // This reduces collisions for similarly named items
           const productKey = slugify(`${subcategory.name}-${name}`);
 
-          await prisma.product.upsert({
-            where: {
-              productKey_supermarket: {
-                productKey,
-                supermarket: SUPERMARKET
-              }
-            },
-            update: {
-              name,
-              price,
-              photoURL: image,
-              categoryName: subcategory.name
-            },
-            create: {
-              name,
-              price,
-              photoURL: image,
-              productKey,
-              supermarket: SUPERMARKET,
-              categoryName: subcategory.name
-            }
+          productsToSave.push({
+            name,
+            price,
+            photoURL: image,
+            url: productUrl,
+            productKey,
+            supermarket: SUPERMARKET,
+            categoryName: subcategory.name
           });
-
-          saved++;
         } catch (error) {
           skipped++;
+
           console.error(
-            `Failed to process product in ${subcategory.name}:`,
+            `Failed to process Lidl product in ${subcategory.name}:`,
             error
           );
         }
@@ -165,12 +166,22 @@ async function scrapeSubcategoryProducts(subcategory: LidlSubcategory) {
       offset += FETCH_SIZE;
     } catch (error) {
       console.error(
-        `Failed to fetch products for subcategory ${subcategory.name} at offset ${offset}:`,
+        `Failed to fetch Lidl products for ${subcategory.name} at offset ${offset}:`,
         error
       );
+
       break;
     }
   }
+
+  const saveResult = await upsertProductsInBatches(productsToSave);
+
+  const saved = saveResult.saved;
+  skipped += saveResult.skipped;
+
+  console.log(
+    `Finished Lidl subcategory ${subcategory.name}. Collected: ${productsToSave.length}, saved: ${saved}, skipped: ${skipped}`
+  );
 
   return { saved, skipped };
 }
@@ -197,23 +208,24 @@ export const scrapeLidl = async () => {
 
     for (const subcategory of subcategories) {
       const result = await scrapeSubcategoryProducts(subcategory);
+
       totalSaved += result.saved;
       totalSkipped += result.skipped;
     }
 
-    console.log(`\nFinished Lidl scrape.`);
+    console.log("\nFinished Lidl scrape.");
     console.log(`Saved ${totalSaved} Lidl products.`);
     console.log(`Skipped ${totalSkipped} Lidl products.`);
+
+    try {
+      getIO().emit("prices-refreshed", {
+        supermarket: SUPERMARKET,
+        updatedAt: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error("Socket emit failed after Lidl scrape:", error);
+    }
   } catch (error) {
     console.error("Lidl scraper failed:", error);
-  }
-  
-    try {
-    getIO().emit("prices-refreshed", {
-      supermarket: SUPERMARKET,
-      updatedAt: new Date().toISOString()
-    });
-  } catch (error) {
-    console.error("Socket emit failed after Lidl scrape:", error);
   }
 };

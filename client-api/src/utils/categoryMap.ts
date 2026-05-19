@@ -4,7 +4,7 @@ export type PriceWiseCategory = {
 };
 
 export const PRICEWISE_CATEGORIES: Record<string, PriceWiseCategory> = {
-  "fresh-food":        { name: "Fresh Food",           slug: "fresh-food" },
+  "fruits-vegetables": { name: "Fruits & Vegetables", slug: "fresh-food" },
   "meat-fish":         { name: "Meat & Fish",          slug: "meat-fish" },
   "dairy-eggs":        { name: "Dairy & Eggs",         slug: "dairy-eggs" },
   "bread-bakery":      { name: "Bread & Bakery",       slug: "bread-bakery" },
@@ -24,13 +24,6 @@ export const PRICEWISE_CATEGORIES: Record<string, PriceWiseCategory> = {
   "unknown":           { name: "Unknown",              slug: "unknown" },
 };
 
-/**
- * Normalise supermarket category names for matching.
- * - lowercase, remove accents, final σ → σ
- * - specific punctuation (- & /) become spaces
- * - DELETE all remaining non‑letters (including invisible/zero‑width characters)
- * - collapse spaces
- */
 function normalizeCategoryText(value?: string | null): string {
   if (!value) return "";
 
@@ -50,11 +43,12 @@ function normalizeCategoryText(value?: string | null): string {
  * The first category matching a keyword wins.
  */
 const CATEGORY_KEYWORDS: Partial<Record<keyof typeof PRICEWISE_CATEGORIES, string[]>> = {
-  "fresh-food": [
+  "fruits-vegetables": [
     "φρεσκα φρουτα",
     "φρουτα",
     "λαχανικα",
-    "μανιταρια"
+    "μανιταρια",
+    "φρουτοσαλατα",
   ],
   "meat-fish": [
     "ετοιμες λυσεις κρεοπωλειου",
@@ -90,6 +84,8 @@ const CATEGORY_KEYWORDS: Partial<Record<keyof typeof PRICEWISE_CATEGORIES, strin
     "σαλαμια",
     "πατε",
     "foie gras",
+    "κρεατικα",
+    "παρασκευασματα κρεατος",
   ],
   "dairy-eggs": [
     "βουτυρο μαργαρινη",
@@ -122,6 +118,14 @@ const CATEGORY_KEYWORDS: Partial<Record<keyof typeof PRICEWISE_CATEGORIES, strin
     "τορτιγιες",
     "ζυμες νωπες",
     "γλυκα",
+    "ζυμες",
+    "προιοντα ζυμης",
+    "κεικς",
+    "παξιμαδι",
+    "τσουρεκι",
+    "φουρνος bake off",
+    "φουρνος ζεστη γωνια",
+    "φρυγανια",
   ],
   "drinks": [
     "χυμοι",
@@ -136,6 +140,9 @@ const CATEGORY_KEYWORDS: Partial<Record<keyof typeof PRICEWISE_CATEGORIES, strin
     "οινοπνευματωδη",
     "ισοτονικα",
     "ενεργειακα",
+    "μπυρα",
+    "παιδικα ροφηματα",
+    "πρωτεινες σε σκονη",
   ],
   "coffee-tea-cocoa": [
     "καφεδες",
@@ -190,6 +197,11 @@ const CATEGORY_KEYWORDS: Partial<Record<keyof typeof PRICEWISE_CATEGORIES, strin
     "ζελε",
     "μειγματα για γλυκα",
     "ζωμοι ψυγειου",
+    "noodles",
+    "αλειμματα",
+    "ζωμοι",
+    "τροφιμα",
+    "υποβρυχιο",
   ],
    "frozen-food": [
     "κατεψυγμενα",
@@ -200,6 +212,7 @@ const CATEGORY_KEYWORDS: Partial<Record<keyof typeof PRICEWISE_CATEGORIES, strin
     "παγωτα",
     "χυμοι ψυγειου",
     "χορτοφαγικες λυσεις",
+    "πατατες",
   ],
    "ready-meals": [
     "ετοιμα γευματα",
@@ -210,7 +223,9 @@ const CATEGORY_KEYWORDS: Partial<Record<keyof typeof PRICEWISE_CATEGORIES, strin
     "σουπες",
     "πιτσες",
     "φυλλα πιτες",
-    "προετοιμασια τραπεζιου",
+    "pizza",
+    "γευματα",
+    "υποκαταστατα κρεατων",
   ],
   "snacks-sweets": [
     "σνακ",
@@ -220,6 +235,14 @@ const CATEGORY_KEYWORDS: Partial<Record<keyof typeof PRICEWISE_CATEGORIES, strin
     "τσιχλες",
     "ξηροι καρποι",
     "υγιεινη ζωη",
+    "γαριδακια",
+    "κρακερ",
+    "κρουτον",
+    "νατσος",
+    "παστελι",
+    "πατατακια",
+    "ποπ κορν",
+    "ρυζογκοφρετες",
   ],
   "baby": [
     "βρεφικη περιποιηση σωματος",
@@ -236,6 +259,7 @@ const CATEGORY_KEYWORDS: Partial<Record<keyof typeof PRICEWISE_CATEGORIES, strin
     "βρεφικα παιδικα φαγητα",
     "βρεφικα",
     "παιδικα φαγητα",
+    "βρεφη παιδια",
   ],
   "pet": [
     "τροφες κατοικιδιων",
@@ -246,6 +270,8 @@ const CATEGORY_KEYWORDS: Partial<Record<keyof typeof PRICEWISE_CATEGORIES, strin
     "λιχουδιες για κατοικιδια",
     "ζωων",
     "υγιεινη ζωων",
+    "γατες",
+    "σκυλοι",
   ],
   "health-beauty": [
     "ανδρικη περιποιηση",
@@ -268,7 +294,12 @@ const CATEGORY_KEYWORDS: Partial<Record<keyof typeof PRICEWISE_CATEGORIES, strin
     "παραφαρμακευτικα ειδη",
     "υγιεινη περιποιηση προσωπου",
     "περιποιηση προσωπου",
-    "πρωτεινες σε σκονη",
+    "ανδρες",
+    "γυναικες",
+    "αρωματα",
+    "μαλλια",
+    "προσωπο",
+    "σωμα",
   ],
   "cleaning-household": [
     "χαρτι οικιακης χρησης",
@@ -306,6 +337,13 @@ const CATEGORY_KEYWORDS: Partial<Record<keyof typeof PRICEWISE_CATEGORIES, strin
     "περιποιηση ρουχων",
     "χαρτικα",
     "περιποιηση υποδηματων",
+    "αποσμητικα χωρου",
+    "εξοπλισμος υφασματων",
+    "περιποιηση παπουτσιων",
+    "προιοντα αποθηκευτικου χωρου",
+    "ρουχων",
+    "τσαντες σακουλες",
+    "προετοιμασια τραπεζιου",
   ],
   "home-garden": [
     "κηπος",
@@ -329,6 +367,7 @@ const CATEGORY_KEYWORDS: Partial<Record<keyof typeof PRICEWISE_CATEGORIES, strin
     "κηπος μπαλκονι",
     "φυτα",
     "λουλουδια",
+    "ειδη φωτισμου",
   ],
   "clothing": [
     "ανδρικη ενδυση",
@@ -366,6 +405,10 @@ const CATEGORY_KEYWORDS: Partial<Record<keyof typeof PRICEWISE_CATEGORIES, strin
     "χαρτι φωτοτυπικο",
     "εξοπλισμος εργασιας",
     "υπνοδωματιο",
+    "αλλα προιοντα",
+    "διαδρομος αποθηκη",
+    "καμινετα φιαλιδια",
+    "καρβουνα προσαναμματα",
   ],
 };
 

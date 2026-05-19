@@ -1,6 +1,16 @@
 import { chromium, Page } from "playwright";
-import prisma from "../config/prisma";
 import { getIO } from "../sockets/socket";
+import {
+  createFastScraperContext,
+  upsertProductsInBatches
+} from "../utils/scraperPerformance";
+import {
+  slugify,
+  buildFullUrl as buildUrl,
+  parseGreekPrice,
+  closeCookiePopup,
+  normalizeSpaces
+} from "../utils/scraperCommon";
 
 const SUPERMARKET = "Sklavenitis";
 const BASE_URL = "https://www.sklavenitis.gr";
@@ -20,66 +30,19 @@ type SklavenitisProduct = {
   categoryName: string;
 };
 
-function slugify(text: string) {
-  return text
-    .toLowerCase()
-    .trim()
-    .replace(/[^\p{L}\p{N}\s-]/gu, "")
-    .replace(/\s+/g, "-");
-}
-
 function buildFullUrl(pathOrUrl: string): string {
-  return new URL(pathOrUrl, BASE_URL).toString();
+  return buildUrl(pathOrUrl, BASE_URL);
 }
 
-function parseGreekPrice(priceText: string): number | null {
-  const cleaned = priceText
-    .replace("€", "")
-    .replace(",", ".")
-    .replace(/[^\d.]/g, "")
-    .trim();
-
-  const price = Number(cleaned);
-
-  if (Number.isNaN(price) || price <= 0) {
-    return null;
-  }
-
-  return Number(price.toFixed(2));
-}
-
-async function closeCookiePopup(page: Page) {
-  try {
-    const button = page
-      .locator(
-        'button:has-text("Αποδοχή"), button:has-text("Αποδέχομαι"), button:has-text("Accept")'
-      )
-      .first();
-
-    if (await button.isVisible({ timeout: 2000 })) {
-      await button.click();
-      await page.waitForTimeout(1000);
-    }
-  } catch {
-    // No cookie popup appeared.
-  }
-}
-
-/**
- * Sklavenitis needs a selected area/hub before the eMarket pages work properly.
- * You found this exact link:
- *
- * <a data-plugin-previewhub="..." data-instance="28">Αττικής</a>
- */
 async function selectAtticaHub(page: Page) {
   console.log("Opening Sklavenitis homepage...");
+
   await page.goto(BASE_URL, {
     waitUntil: "domcontentloaded",
     timeout: 60000
   });
 
   await closeCookiePopup(page);
-  await page.waitForTimeout(3000);
 
   console.log("Selecting Sklavenitis area: Αττικής...");
 
@@ -91,48 +54,58 @@ async function selectAtticaHub(page: Page) {
     await atticaHub.waitFor({ state: "visible", timeout: 10000 });
     await atticaHub.click();
 
-    // The click triggers site JavaScript/AJAX.
-    await page.waitForTimeout(5000);
+    await page.waitForLoadState("networkidle", {
+      timeout: 8000
+    }).catch(() => {
+      // Sklavenitis may keep background requests open.
+    });
+
+    await page.waitForTimeout(1000);
 
     console.log("Αττικής selected.");
-  } catch (error) {
+  } catch {
     console.log("Could not click Αττικής hub using data-instance=28.");
     console.log("Trying fallback by text...");
 
-    try {
-      await page.locator('a:has-text("Αττικής")').first().click();
-      await page.waitForTimeout(5000);
-      console.log("Αττικής selected using text fallback.");
-    } catch (fallbackError) {
-      console.error("Could not select Αττικής.");
-      throw fallbackError;
-    }
+    await page.locator('a:has-text("Αττικής")').first().click();
+
+    await page.waitForLoadState("networkidle", {
+      timeout: 8000
+    }).catch(() => {
+      // Ignore networkidle timeout.
+    });
+
+    await page.waitForTimeout(1000);
+
+    console.log("Αττικής selected using text fallback.");
   }
 }
 
-/**
- * Gets all subcategory links from:
- *
- * .categories_item
- *   .categories_subs
- *     a[href]
- *
- * Example:
- * /eidi-artozacharoplasteioy/psomi-artoskeyasmata/
- */
 async function getSklavenitisSubcategories(
-  page: Page
+    page: Page
 ): Promise<SklavenitisSubcategory[]> {
-  console.log("Opening Sklavenitis categories page...");
+    console.log("Opening Sklavenitis categories page...");
 
-  await page.goto(CATEGORIES_URL, {
-    waitUntil: "domcontentloaded",
-    timeout: 60000
-  });
+    await page.goto(CATEGORIES_URL, {
+        waitUntil: "domcontentloaded",
+        timeout: 60000
+    });
 
-  await page.waitForTimeout(4000);
+    await page.waitForFunction(
+        () => {
+            return document.querySelectorAll(
+            ".categories_item .categories_subs a[href]"
+            ).length > 0;
+        },
+        undefined,
+        {
+            timeout: 10000
+        }
+    );
 
-  const subcategories = await page.evaluate(() => {
+await page.waitForTimeout(500);
+
+    const subcategories = await page.evaluate(() => {
     const results: { name: string; url: string }[] = [];
     const seen = new Set<string>();
 
@@ -169,17 +142,6 @@ async function getSklavenitisSubcategories(
   return subcategories;
 }
 
-/**
- * Extract products from one Sklavenitis subcategory page.
- *
- * We use the exact structure you found:
- *
- * Price:
- * .main-price .price[data-price]
- *
- * Name/photo:
- * a img[alt]
- */
 async function extractProductsFromCurrentPage(
   page: Page,
   categoryName: string
@@ -290,7 +252,7 @@ async function extractProductsFromCurrentPage(
     const productKey = slugify(product.href || product.name);
 
     cleanedProducts.push({
-      name: product.name,
+      name: normalizeSpaces(product.name),
       price,
       productKey,
       photoURL: product.image,
@@ -300,6 +262,111 @@ async function extractProductsFromCurrentPage(
   }
 
   return cleanedProducts;
+}
+
+function parseSklavenitisProductCounter(text: string) {
+
+  const normalized = text.replace(/\s+/g, " ").trim();
+  const match = normalized.match(/(\d+)\s+από\s+τα\s+(\d+)/i);
+
+  if (!match) {
+    return null;
+  }
+
+  return {
+    visible: Number(match[1]),
+    total: Number(match[2])
+  };
+}
+
+async function getSklavenitisProductCounter(page: Page) {
+  try {
+    const counterText = await page
+      .locator(".current-page")
+      .first()
+      .textContent({
+        timeout: 2000
+      });
+
+    if (!counterText) {
+      return null;
+    }
+
+    return parseSklavenitisProductCounter(counterText);
+  } catch {
+    return null;
+  }
+}
+
+async function scrollUntilAllSklavenitisProductsLoaded(page: Page) {
+  console.log("Scrolling Sklavenitis product list...");
+
+  const MAX_SCROLLS = 80;
+  const MAX_STABLE_ROUNDS = 10;
+
+  let previousVisible = 0;
+  let stableRounds = 0;
+
+  for (let scrollNumber = 1; scrollNumber <= MAX_SCROLLS; scrollNumber++) {
+    const counterBefore = await getSklavenitisProductCounter(page);
+
+    if (counterBefore) {
+      console.log(
+        `Scroll ${scrollNumber}: ${counterBefore.visible} από τα ${counterBefore.total} προϊόντα`
+      );
+
+      if (counterBefore.visible >= counterBefore.total) {
+        console.log("All Sklavenitis products are loaded.");
+        return;
+      }
+
+      if (counterBefore.visible === previousVisible) {
+        stableRounds++;
+      } else {
+        stableRounds = 0;
+        previousVisible = counterBefore.visible;
+      }
+
+      if (stableRounds >= MAX_STABLE_ROUNDS) {
+        console.log(
+          "Product counter stopped increasing for several rounds. Stopping scroll."
+        );
+        return;
+      }
+    }
+
+    /*
+      Important:
+      Do NOT jump straight to document.body.scrollHeight.
+      Sklavenitis lazy loading needs gradual scrolling.
+    */
+
+    await page.mouse.wheel(0, 700);
+    await page.waitForTimeout(700);
+
+    await page.mouse.wheel(0, 700);
+    await page.waitForTimeout(700);
+
+    const productPriceCount = await page
+      .locator(".main-price .price[data-price]")
+      .count();
+
+    if (productPriceCount > 0) {
+      await page
+        .locator(".main-price .price[data-price]")
+        .nth(productPriceCount - 1)
+        .scrollIntoViewIfNeeded()
+        .catch(() => {
+        });
+
+      await page.waitForTimeout(1200);
+    }
+
+    await page.mouse.wheel(0, 1000);
+    await page.waitForTimeout(1500);
+  }
+
+  console.log("Reached max Sklavenitis scroll attempts.");
 }
 
 async function scrapeSubcategory(
@@ -319,7 +386,14 @@ async function scrapeSubcategory(
       timeout: 60000
     });
 
-    await page.waitForTimeout(4000);
+    await page.waitForSelector(".main-price .price[data-price], .current-page", {
+      timeout: 10000
+    }).catch(() => {
+    });
+
+    await page.waitForTimeout(2000);
+
+    await scrollUntilAllSklavenitisProductsLoaded(page);
 
     const products = await extractProductsFromCurrentPage(
       page,
@@ -328,42 +402,15 @@ async function scrapeSubcategory(
 
     console.log(`Found ${products.length} products in ${subcategory.name}.`);
 
-    for (const product of products) {
-      try {
-        await prisma.product.upsert({
-          where: {
-            productKey_supermarket: {
-              productKey: product.productKey,
-              supermarket: SUPERMARKET
-            }
-          },
-          update: {
-            name: product.name,
-            price: product.price,
-            photoURL: product.photoURL,
-            url: product.url,
-            categoryName: product.categoryName
-          },
-          create: {
-            name: product.name,
-            price: product.price,
-            photoURL: product.photoURL,
-            url: product.url,
-            productKey: product.productKey,
-            supermarket: SUPERMARKET,
-            categoryName: product.categoryName
-          }
-        });
+    const result = await upsertProductsInBatches(
+      products.map((product) => ({
+        ...product,
+        supermarket: SUPERMARKET
+      }))
+    );
 
-        saved++;
-      } catch (error) {
-        skipped++;
-        console.error(
-          `Failed to save Sklavenitis product "${product.name}":`,
-          error
-        );
-      }
-    }
+    saved += result.saved;
+    skipped += result.skipped;
   } catch (error) {
     console.error(
       `Failed to scrape Sklavenitis subcategory "${subcategory.name}":`,
@@ -385,11 +432,7 @@ export const scrapeSklavenitis = async () => {
     headless: true
   });
 
-  const context = await browser.newContext({
-    userAgent:
-      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/122.0.0.0 Safari/537.36",
-    locale: "el-GR"
-  });
+  const context = await createFastScraperContext(browser);
 
   const page = await context.newPage();
 

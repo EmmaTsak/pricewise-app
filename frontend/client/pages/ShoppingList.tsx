@@ -8,7 +8,7 @@ import ProductImage from "../components/ProductImage";
 import { isValidEmail } from "../utils/validateEmail";
 
 export default function ShoppingList() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { showToast } = useToast();
   const { items, removeItem } = useShoppingList();
 
@@ -36,15 +36,14 @@ export default function ShoppingList() {
     try {
       setSending(true);
 
-      await sendShoppingListEmail(trimmedEmail, items);
+      await sendShoppingListEmail(trimmedEmail, items, i18n.language);
 
       showToast(t("shoppingList.alerts.sent"), "success");
       setEmail("");
-    } catch (error: any) {
-      const message =
-        error?.response?.data?.error || t("shoppingList.alerts.failed");
+    } catch (error) {
+      console.error("Failed to send shopping list email:", error);
+      showToast(t("shoppingList.alerts.failed"), "error");
 
-      showToast(message, "error");
     } finally {
       setSending(false);
     }
@@ -135,7 +134,7 @@ export default function ShoppingList() {
 
                             <div className="flex flex-wrap items-center gap-2 mt-2">
                               <span className="inline-flex items-center rounded-full bg-brand-green/10 border border-brand-green/20 px-3 py-1 text-xs font-medium text-brand-blue-darker">
-                                {item.supermarket}
+                                {t(`stores.${item.supermarket}`)}
                               </span>
 
                               {item.categoryName && (
@@ -147,21 +146,21 @@ export default function ShoppingList() {
                           </div>
                         </div>
 
-                        <div className="flex items-center justify-between sm:justify-end gap-4">
-                          <div className="text-left sm:text-right">
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-end gap-3 sm:gap-4 w-full sm:w-auto">
+                          <div className="w-full sm:w-auto text-left sm:text-right">
                             <p className="text-xs uppercase tracking-wide text-gray-500 mb-1">
                               {t("shoppingList.price")}
                             </p>
 
                             <p className="text-2xl font-bold text-brand-blue-darker leading-relaxed">
-                              €{item.price}
+                              €{Number(item.price).toFixed(2)}
                             </p>
                           </div>
 
                           <button
                             type="button"
                             onClick={() => removeItem(item.id)}
-                            className="inline-flex items-center justify-center gap-2 rounded-2xl border border-red-200 bg-red-50 text-red-600 px-4 py-3 font-medium hover:bg-red-100 transition-colors"
+                            className="inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-2xl border border-red-200 bg-red-50 text-red-600 px-4 py-3 font-medium hover:bg-red-100 transition-colors"
                           >
                             <Trash2 size={18} />
                             <span>{t("shoppingList.remove")}</span>

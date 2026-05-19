@@ -1,8 +1,8 @@
 # Run with Docker
 
-<<<<<<< HEAD
 docker-compose up --build
-=======
+
+
 A full-stack web application that allows users to compare grocery prices across multiple supermarkets in real time, helping them make smarter and more cost-effective shopping decisions.
 
 Features:
@@ -55,6 +55,4 @@ Real-time price comparison across stores
 Aggregation of product data
 Smart filtering (price, category, store)
 Dynamic updates without page reload
->>>>>>> 63aada3907d73e166dbc99e9b999a2d9204fa922
 
->>>>>>> 5815c085b0bd0d0399d914d88afc33acb113f5d5
