@@ -1,41 +1,51 @@
 version: "3.9"
 
 services:
-
-  postgres:
-    image: postgres:15
-    container_name: pricewise-db
-    restart: always
+  database:
+    image: postgres:16
+    container_name: pricewise-database
+    restart: unless-stopped
     environment:
       POSTGRES_USER: pricewise
-      POSTGRES_PASSWORD: pricewise
+      POSTGRES_PASSWORD: pricewise_password
       POSTGRES_DB: pricewise
-    ports:
-      - "5432:5432"
     volumes:
-      - postgres-data:/var/lib/postgresql/data
+      - pricewise_postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5433:5432"
 
   backend:
-    build: ./client-api
-    container_name: pricewise-api
+    build:
+      context: ./client-api
+    container_name: pricewise-backend
+    restart: unless-stopped
     depends_on:
-      - postgres
+      - database
+    environment:
+      PORT: 5000
+      DATABASE_URL: postgresql://pricewise:pricewise_password@database:5432/pricewise
+      CORS_ORIGINS: http://localhost:8080
+      SCRAPER_CRON: "0 */24 * * *"
+      RUN_SCRAPE_ON_START: "false"
+      EMAIL_HOST: smtp.gmail.com
+      EMAIL_PORT: 587
+      EMAIL_USER: pricewise.webapp@gmail.com
+      EMAIL_PASS: wuzwljjgslecnbdw
     ports:
       - "5000:5000"
-    environment:
-      DATABASE_URL: postgresql://pricewise:pricewise@postgres:5432/pricewise
-    volumes:
-      - ./backend:/app
 
   frontend:
-    build: ./frontend
-    container_name: pricewise-client
-    ports:
-      - "5173:5173"
+    build:
+      context: ./frontend
+      args:
+        VITE_API_BASE_URL: http://localhost:5000
+        VITE_SOCKET_URL: http://localhost:5000
+    container_name: pricewise-frontend
+    restart: unless-stopped
     depends_on:
       - backend
-    environment:
-      VITE_API_URL: http://localhost:5000
+    ports:
+      - "8080:80"
 
 volumes:
-  postgres-data:
+  pricewise_postgres_data:

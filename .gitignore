@@ -26,3 +26,5 @@ frontend/*.njsproj
 frontend/*.sln
 frontend/*.sw?
 frontend/.env
+
+docker-compose.override.yml
