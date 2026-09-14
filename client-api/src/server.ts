@@ -16,9 +16,16 @@ const shouldRunScrapeOnStart = process.env.RUN_SCRAPE_ON_START === "true";
 server.listen(PORT, async () => {
   console.log(`Server is running on port ${PORT}`);
 
-  startScrapers();
+const scrapersEnabled = process.env.ENABLE_SCRAPERS === "true";
 
-  if (shouldRunScrapeOnStart) {
+if (scrapersEnabled) {
+  startScrapers();
+  console.log("Scraper scheduler enabled.");
+} else {
+  console.log("Scraper scheduler disabled.");
+}
+
+if (scrapersEnabled && shouldRunScrapeOnStart) {
     console.log("RUN_SCRAPE_ON_START is true. Running scrapers now...");
     await runAllScrapers();
   } else {
