@@ -7,10 +7,6 @@ services:
     restart: unless-stopped
     env_file:
       - ./client-api/.env
-    environment:
-      POSTGRES_USER: ${POSTGRES_USER:-pricewise}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-pricewise_password}
-      POSTGRES_DB: ${POSTGRES_DB:-pricewise}
     volumes:
       - pricewise_postgres_data:/var/lib/postgresql/data
     ports:
