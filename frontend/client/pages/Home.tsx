@@ -24,6 +24,7 @@ export default function Index() {
   const { t } = useTranslation();
 
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
 
   // Stores the categories and supermarkets from the backend
   const [meta, setMeta] = useState<ProductMeta | null>(null);
@@ -38,7 +39,7 @@ export default function Index() {
   const [pendingSupermarkets, setPendingSupermarkets] = useState<string[]>([]);
 
   const hasActiveSearch =
-    search.trim().length > 0 ||
+    debouncedSearch.trim().length > 0 ||
     selectedCategory !== "";
 
   const [groups, setGroups] = useState<ProductGroup[]>([]);
@@ -58,6 +59,16 @@ export default function Index() {
     }
   };
 
+  useEffect(() => {
+    const timeoutId = window.setTimeout(() => {
+      setDebouncedSearch(search);
+    }, 400);
+  
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [search]);
+
   // Loads grouped products using search + filters
   const loadGroups = useCallback(async () => {
     if (!hasActiveSearch) {
@@ -69,7 +80,7 @@ export default function Index() {
       setLoadingGroups(true);
 
       const response = await getProductGroups({
-        search: search.trim() || undefined,
+        search: debouncedSearch.trim() || undefined,
 
         category: selectedCategory || undefined,
 
@@ -85,7 +96,7 @@ export default function Index() {
     } finally {
       setLoadingGroups(false);
     }
-  }, [hasActiveSearch, search, selectedCategory, selectedSupermarkets]);
+  }, [hasActiveSearch, debouncedSearch, selectedCategory, selectedSupermarkets]);
 
   const openComparison = async (groupId: string) => {
     try {
