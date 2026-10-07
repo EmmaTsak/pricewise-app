@@ -1,4 +1,4 @@
-# PriceWise — Grocery Price Comparison Web App
+# PriceWise - Grocery Price Comparison Web App
 
 PriceWise is a full-stack grocery price comparison application built as my **BSc (Hons) Computing (Software Development) thesis project**.
 
