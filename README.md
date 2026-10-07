@@ -1,176 +1,267 @@
-# PriceWise – Grocery Price Comparison Web App
+# PriceWise — Grocery Price Comparison Web App
 
-PriceWise is a full-stack grocery price comparison application that helps users compare product prices across Greek supermarkets. It collects product data through automated scraping, stores it in a PostgreSQL database, and displays the results in a modern React web interface.
+PriceWise is a full-stack grocery price comparison application built as my **BSc (Hons) Computing (Software Development) thesis project**.
 
-The application includes:
+It collects product data from Greek supermarket websites, normalises and stores it in PostgreSQL, groups comparable products, and presents price comparisons through a React interface.
 
-* Product search and filtering
-* Supermarket price comparison
-* Product grouping for similar items
-* Shopping list functionality
-* Email sending for shopping lists
-* Real-time price update notifications using Socket.IO
-* Scheduled scraping for updated prices
+The project combines full-stack development, web scraping, database design, scheduled data collection, real-time updates, multilingual UI, and privacy-conscious product decisions.
 
----
+## Live Application
 
-## 1. Project Title & Short Description
+**Live demo:**  
+https://pricewise-web-production.up.railway.app
 
-# PriceWise
+**Portfolio case study:**  
+https://emmatsak.github.io/portfolio/projects/pricewise
 
-PriceWise is a grocery price comparison tool built with:
-
-* React + TypeScript frontend
-* Node.js + Express backend
-* PostgreSQL database
-* Prisma ORM
-* Docker
-* Web scraping scripts for supermarket product data
-
-The goal of the project is to help users search for grocery products, compare prices between supermarkets, and create a shopping list.
+**Repository:**  
+https://github.com/EmmaTsak/pricewise-app
 
 ---
 
-## 2. Prerequisites
+## What I Built
 
-Before running the application, install the following tools.
+PriceWise includes:
 
-### 2.1 Node.js
+- Product search and filtering
+- Supermarket price comparison
+- Product grouping for comparable items
+- Scheduled supermarket-specific scraping
+- PostgreSQL data storage with Prisma
+- Shopping list functionality
+- Local shopping-list storage without mandatory accounts
+- Optional shopping-list delivery by email
+- English and Greek interface with `react-i18next`
+- Socket.IO notifications after product-data refreshes
+- Dockerized frontend, backend, and PostgreSQL database
 
-Node.js allows the application to run JavaScript/TypeScript code outside the browser.
+---
 
-Install Node.js version 18 or higher.
+## Tech Stack
 
-Recommended: Node.js 20 LTS or newer.
+### Frontend
 
-Official download page:
+- React
+- TypeScript
+- Vite
+- Axios
+- React Query
+- react-i18next
+- Socket.IO Client
+- React Router
+- Tailwind CSS
+
+### Backend
+
+- Node.js
+- Express
+- TypeScript
+- PostgreSQL
+- Prisma ORM
+- Socket.IO
+- Nodemailer
+- node-cron
+- node-cache
+
+### Data Collection
+
+- Playwright
+- Cheerio
+- Axios
+- Puppeteer
+- Source-specific supermarket scrapers
+
+### Infrastructure
+
+- Docker
+- Docker Compose
+- Nginx
+- PostgreSQL 16
+
+---
+
+## Architecture
 
 ```text
-https://nodejs.org/en/download
+Supermarket websites
+        ↓
+Source-specific scrapers
+        ↓
+Data cleaning / normalisation
+        ↓
+PostgreSQL + Prisma
+        ↓
+Node.js / Express API
+        ↓
+React + TypeScript frontend
+        ↓
+Search · Comparison · Shopping list
 ```
 
-After installing Node.js, open a terminal and check that it works:
-
-```bash
-node -v
-```
-
-You should see something like:
-
-```bash
-v20.x.x
-```
-
-Also check npm:
-
-```bash
-npm -v
-```
-
-npm is installed automatically with Node.js.
-
----
-
-### 2.2 Docker Desktop
-
-Docker Desktop is recommended because it can run the database and application containers without requiring the user to manually install PostgreSQL.
-
-Official Docker Desktop download page:
+The scheduled update flow works separately from normal user searches:
 
 ```text
-https://www.docker.com/products/docker-desktop/
-```
-
-Download the correct version for your computer:
-
-* Windows: Docker Desktop for Windows
-* macOS Apple Silicon: Mac with M1/M2/M3/M4 chip
-* macOS Intel: Older Mac with Intel processor
-
-After installation, open Docker Desktop and keep it running.
-
-To check that Docker works, open a terminal and run:
-
-```bash
-docker --version
-```
-
-Then check Docker Compose:
-
-```bash
-docker compose version
-```
-
-Some older systems may use this command instead:
-
-```bash
-docker-compose --version
-```
-
----
-
-### 2.3 Git Optional
-
-Git is optional because this project is provided as a ZIP file.
-
-Install Git only if you want to clone the project from a repository.
-
-Official Git download page:
-
-```text
-https://git-scm.com/install
-```
-
-Check Git installation:
-
-```bash
-git --version
+Scheduled scraper job
+        ↓
+Collect supermarket data
+        ↓
+Normalise and store products
+        ↓
+Database refresh
+        ↓
+Socket.IO event
+        ↓
+Connected frontend refresh
 ```
 
 ---
 
-### 2.4 Modern Web Browser
+## Engineering Decisions
 
-Use one of the following browsers:
+### Scheduled Scraping Instead of Per-Search Scraping
 
-* Google Chrome
-* Microsoft Edge
-* Mozilla Firefox
+Scraping supermarket websites during every user search would make the application slow and tightly couple user requests to external website availability.
+
+PriceWise instead collects supermarket data through scheduled jobs and stores the results in PostgreSQL.
+
+Users search the stored data rather than waiting for external websites to respond during every request.
+
+This also allows scraping frequency to be controlled independently from normal application traffic.
 
 ---
 
-## 3. Download and Extract
+### Account-Free Shopping List
 
-If you received the project as a ZIP file, follow these steps.
+The main PriceWise workflow does not require user accounts.
 
-### Windows
+Shopping-list data is stored locally in the browser so users can use the core feature without providing personal information or creating credentials.
 
-1. Locate the ZIP file, for example:
+Email delivery is optional.
 
-```text
-PriceWise.zip
+This keeps the application simpler while reducing unnecessary personal-data collection.
+
+---
+
+### Product Grouping
+
+Products collected from different supermarkets do not share one universal product identifier.
+
+The application therefore needs to normalise product information and group similar products before useful price comparisons can be shown.
+
+This introduces challenges such as:
+
+- different product naming conventions
+- brand variations
+- different quantities
+- inconsistent categories
+- different supermarket page structures
+
+Product grouping is therefore a separate part of the data-processing workflow rather than only a frontend presentation concern.
+
+---
+
+### Source-Specific Scrapers
+
+Supermarket websites use different HTML structures and loading strategies.
+
+PriceWise therefore uses source-specific scraper logic rather than assuming that one generic scraper can reliably process every website.
+
+Dynamic websites can require browser automation with Playwright, while other content can be processed with HTTP requests and HTML parsing.
+
+---
+
+### Real-Time UI Refresh
+
+Socket.IO is used to notify connected clients when product data has been refreshed.
+
+This allows the frontend to react to backend data updates without requiring users to manually reload the page.
+
+---
+
+## Testing and Evaluation
+
+The thesis evaluation primarily used **manual testing**.
+
+The application was checked for:
+
+- frontend navigation and behaviour
+- product search
+- filtering
+- supermarket comparison
+- adding and removing shopping-list items
+- local shopping-list persistence
+- optional email delivery
+- English/Greek language switching
+- backend API endpoints
+- database connectivity
+- scraper behaviour
+- Socket.IO refresh behaviour
+- error handling
+
+### Playwright
+
+Playwright is used in this project for **dynamic web scraping**.
+
+It is not presented as end-to-end frontend test automation.
+
+Automated unit and integration testing was identified as an important future improvement.
+
+Potential automated test areas include:
+
+- product normalisation
+- product grouping
+- scraper data cleaning
+- API endpoints
+- shopping-list logic
+- frontend utility functions
+
+---
+
+## Project Status
+
+PriceWise is a **functional academic prototype**.
+
+The project demonstrates the complete flow from external supermarket data collection through backend processing and database storage to the user-facing comparison interface.
+
+Because supermarket websites are external dependencies, scraper selectors and collection logic may require maintenance when those websites change.
+
+---
+
+# Local Setup
+
+The easiest way to run PriceWise locally is with Docker.
+
+## Prerequisites
+
+Install:
+
+- Git
+- Docker Desktop
+- Docker Compose
+
+For development without Docker, you will also need:
+
+- Node.js
+- npm
+- PostgreSQL
+
+The backend Docker image uses Node.js 20.
+
+The frontend build uses Node.js 22.
+
+---
+
+## Clone the Repository
+
+```bash
+git clone https://github.com/EmmaTsak/pricewise-app.git
+cd pricewise-app
 ```
 
-2. Right-click the ZIP file.
-
-3. Select:
+The main project structure is:
 
 ```text
-Extract All...
-```
-
-4. Choose a simple folder location, for example:
-
-```text
-C:\Projects\PriceWise
-```
-
-5. After extraction, open the extracted folder.
-
-The project should look similar to this:
-
-```text
-PriceWise/
+pricewise-app/
 ├── client-api/
 ├── frontend/
 ├── docker-compose.yml
@@ -179,321 +270,217 @@ PriceWise/
 
 ---
 
-### macOS
+# Running with Docker
 
-1. Locate the ZIP file in Finder.
+Docker runs:
 
-2. Double-click the ZIP file.
+- PostgreSQL
+- the Node.js/Express backend
+- the React frontend through Nginx
 
-3. macOS will extract it automatically.
+## 1. Configure the Backend Environment
 
-4. Move the extracted folder somewhere simple, for example:
-
-```text
-Documents/Projects/PriceWise
-```
-
-The project should look similar to this:
+The repository contains:
 
 ```text
-PriceWise/
-├── client-api/
-├── frontend/
-├── docker-compose.yml
-└── README.md
+client-api/.env.example
 ```
 
----
-
-## 4. Environment Configuration
-
-The application uses environment variables for database connection settings, backend settings, scraping schedule, and email configuration.
-
-There are two parts:
+Copy it to:
 
 ```text
-client-api/
+client-api/.env
 ```
 
-This is the backend.
+### Windows PowerShell
 
-```text
-frontend/
+```powershell
+Copy-Item client-api/.env.example client-api/.env
 ```
 
-This is the frontend.
+### macOS / Linux
 
----
-
-### 4.1 Backend Environment File
-
-Create a file named:
-
-```text
-.env
+```bash
+cp client-api/.env.example client-api/.env
 ```
 
-inside:
-
-```text
-client-api/
-```
-
-Example path:
-
-```text
-PriceWise/client-api/.env
-```
-
-Use this example content:
+The example configuration is:
 
 ```env
 PORT=5000
 
-DATABASE_URL="postgresql://pricewise:pricewise_password@localhost:5433/pricewise"
+POSTGRES_USER=pricewise
+POSTGRES_PASSWORD=your_database_password_here
+POSTGRES_DB=pricewise
 
-CORS_ORIGINS="http://localhost:5173,http://localhost:8080"
+DATABASE_URL=postgresql://pricewise:your_database_password_here@database:5432/pricewise
 
-SCRAPER_CRON="0 0 * * *"
-RUN_SCRAPE_ON_START="false"
+CORS_ORIGINS=http://localhost:8080
 
-EMAIL_HOST="smtp.gmail.com"
+SCRAPER_CRON=0 */24 * * *
+ENABLE_SCRAPERS=false
+RUN_SCRAPE_ON_START=false
+
+EMAIL_HOST=smtp.gmail.com
 EMAIL_PORT=587
-EMAIL_USER=""
-EMAIL_PASS=""
+EMAIL_USER=your_email@gmail.com
+EMAIL_PASS=your_gmail_app_password_here
 ```
 
-Explanation:
+Change:
 
-```text
-PORT
+```env
+POSTGRES_PASSWORD=your_database_password_here
 ```
 
-The port used by the backend API. This project uses port 5000.
+to a local development password.
 
-```text
+Use the same password inside:
+
+```env
 DATABASE_URL
 ```
 
-The PostgreSQL database connection string.
-
-```text
-CORS_ORIGINS
-```
-
-The frontend addresses that are allowed to communicate with the backend.
-
-```text
-SCRAPER_CRON
-```
-
-Controls when the scraping cycle runs. By default, the scraping cycle runs once per day.
-
-```text
-RUN_SCRAPE_ON_START
-```
-
-If set to `true`, the backend will run the scrapers immediately when it starts.
-
-```text
-EMAIL_HOST, EMAIL_PORT, EMAIL_USER, EMAIL_PASS
-```
-
-Used for sending the shopping list by email.
-
-If you do not configure email credentials, the application can still run, but the email shopping list feature will not work.
-
-Important:
-
-Do not share real email passwords publicly. If using Gmail, use a Gmail App Password, not your normal Gmail password.
-
----
-
-### 4.2 Frontend Environment File
-
-Create a file named:
-
-```text
-.env
-```
-
-inside:
-
-```text
-frontend/
-```
-
-Example path:
-
-```text
-PriceWise/frontend/.env
-```
-
-Use this content:
+For example:
 
 ```env
-VITE_API_BASE_URL="http://localhost:5000"
-VITE_SOCKET_URL="http://localhost:5000"
+POSTGRES_PASSWORD=pricewise_local_password
+
+DATABASE_URL=postgresql://pricewise:pricewise_local_password@database:5432/pricewise
 ```
 
-Explanation:
-
-```text
-VITE_API_BASE_URL
-```
-
-The address of the backend API.
-
-```text
-VITE_SOCKET_URL
-```
-
-The address used by Socket.IO for real-time updates.
+Do not commit your real `.env` file.
 
 ---
 
-### 4.3 Important Docker Note
+## Environment Variables
 
-The provided Docker setup already defines many environment variables inside:
+### `PORT`
 
-```text
-docker-compose.yml
-```
+Backend API port.
 
-For Docker, the backend uses the internal database address:
-
-```env
-DATABASE_URL=postgresql://pricewise:pricewise_password@database:5432/pricewise
-```
-
-For local non-Docker development, the backend uses the host address:
-
-```env
-DATABASE_URL=postgresql://pricewise:pricewise_password@localhost:5433/pricewise
-```
-
-This difference is normal.
-
----
-
-## 5. Running the Application with Docker Recommended
-
-This is the easiest and recommended method.
-
-Docker will run:
-
-* PostgreSQL database
-* Node.js backend
-* React frontend served through Nginx
-
-The first build may take several minutes because Docker needs to download images, install dependencies, build the frontend, build the backend, and install browser dependencies for scraping.
-
----
-
-### 5.1 Start Docker Desktop
-
-1. Open Docker Desktop.
-2. Wait until Docker says it is running.
-3. Keep Docker Desktop open.
-
----
-
-### 5.2 Open a Terminal in the Project Root Folder
-
-The project root folder is the folder that contains:
+Default:
 
 ```text
-docker-compose.yml
+5000
+```
+
+### `POSTGRES_USER`
+
+PostgreSQL username used by the Docker database.
+
+### `POSTGRES_PASSWORD`
+
+Password for the PostgreSQL user.
+
+Use a development value locally and do not commit real credentials.
+
+### `POSTGRES_DB`
+
+Name of the PostgreSQL database.
+
+Default:
+
+```text
+pricewise
+```
+
+### `DATABASE_URL`
+
+Prisma database connection string.
+
+Inside Docker, the PostgreSQL service is available through the Docker service name:
+
+```text
+database
 ```
 
 Example:
 
-```text
-PriceWise/
-├── client-api/
-├── frontend/
-└── docker-compose.yml
+```env
+DATABASE_URL=postgresql://pricewise:pricewise_local_password@database:5432/pricewise
 ```
+
+### `CORS_ORIGINS`
+
+Frontend origins allowed to communicate with the API.
+
+Docker frontend:
+
+```env
+CORS_ORIGINS=http://localhost:8080
+```
+
+### `SCRAPER_CRON`
+
+Controls the scheduled scraper job.
+
+Example:
+
+```env
+SCRAPER_CRON=0 */24 * * *
+```
+
+### `ENABLE_SCRAPERS`
+
+Controls whether scheduled scraping is enabled.
+
+For normal local development:
+
+```env
+ENABLE_SCRAPERS=false
+```
+
+### `RUN_SCRAPE_ON_START`
+
+Controls whether scraping should begin when the backend starts.
+
+For normal development:
+
+```env
+RUN_SCRAPE_ON_START=false
+```
+
+### Email Variables
+
+```env
+EMAIL_HOST=smtp.gmail.com
+EMAIL_PORT=587
+EMAIL_USER=your_email@gmail.com
+EMAIL_PASS=your_gmail_app_password_here
+```
+
+These are used only for optional shopping-list email delivery.
+
+If you use Gmail, use an **App Password**, not your normal Gmail password.
+
+The rest of the application can run without email delivery being configured.
 
 ---
 
-### Windows
+## 2. Build and Start the Application
 
-Open the project folder, click the address bar, type:
-
-```text
-cmd
-```
-
-Then press Enter.
-
-A terminal will open in the correct folder.
-
-You can check that you are in the correct folder by running:
-
-```bash
-dir
-```
-
-You should see:
-
-```text
-client-api
-frontend
-docker-compose.yml
-```
-
----
-
-### macOS
-
-Open Terminal.
-
-Move into the project folder. Example:
-
-```bash
-cd ~/Documents/Projects/PriceWise
-```
-
-Check the files:
-
-```bash
-ls
-```
-
-You should see:
-
-```text
-client-api
-frontend
-docker-compose.yml
-```
-
----
-
-### 5.3 Build and Start the Application
-
-From the project root folder, run:
+From the repository root:
 
 ```bash
 docker compose up --build
 ```
 
-If your system uses the older Docker Compose command, run:
+Docker starts three services:
 
-```bash
-docker-compose up --build
+```text
+pricewise-database
+pricewise-backend
+pricewise-frontend
 ```
 
-Wait until the containers finish building and starting.
-
-The first build can take several minutes.
+The first build can take longer because the backend image installs Playwright and Chromium dependencies.
 
 ---
 
-### 5.4 Prepare the Database
+## 3. Prepare the Database
 
-After the containers are running, open a second terminal in the same project root folder.
+After the containers are running, open another terminal in the project root.
 
 Run:
 
@@ -501,9 +488,9 @@ Run:
 docker exec -it pricewise-backend npx prisma db push
 ```
 
-This creates the database tables from the Prisma schema.
+This applies the Prisma schema to PostgreSQL.
 
-Then generate the Prisma client if needed:
+The Prisma client is already generated during the backend Docker build, but it can also be generated manually if needed:
 
 ```bash
 docker exec -it pricewise-backend npx prisma generate
@@ -511,9 +498,7 @@ docker exec -it pricewise-backend npx prisma generate
 
 ---
 
-### 5.5 Access the Application
-
-In Docker mode, this project uses these addresses:
+## 4. Access the Application
 
 Frontend:
 
@@ -527,31 +512,29 @@ Backend API:
 http://localhost:5000
 ```
 
-To test the backend, open this in your browser:
+PostgreSQL is exposed to the host on:
 
 ```text
-http://localhost:5000
+localhost:5433
 ```
 
-You should see a JSON message similar to:
+Inside the Docker network, the backend connects to PostgreSQL using:
 
-```json
-{
-  "message": "PriceWise API is running"
-}
+```text
+database:5432
 ```
 
 ---
 
-### 5.6 Stop the Application
+## 5. Stop the Application
 
-To stop the application, press:
+Press:
 
 ```text
 CTRL + C
 ```
 
-inside the terminal running Docker.
+in the terminal running Docker Compose.
 
 Then run:
 
@@ -559,84 +542,47 @@ Then run:
 docker compose down
 ```
 
-If using the older command:
-
-```bash
-docker-compose down
-```
-
 ---
 
-### 5.7 Reset Everything Including Database Data
+## Reset the Local Database
 
-Only use this if you want to delete the database data completely.
+To stop the application and remove its persistent PostgreSQL volume:
 
 ```bash
 docker compose down -v
 ```
 
-Then start again:
+Then rebuild:
 
 ```bash
 docker compose up --build
 ```
 
-And run:
+Recreate the database schema:
 
 ```bash
 docker exec -it pricewise-backend npx prisma db push
 ```
 
+> `docker compose down -v` deletes local database data.
+
 ---
 
-## 6. Alternative: Running without Docker Advanced Users
+# Running Without Docker
 
-This method is for advanced users who want to run the backend and frontend manually.
+You can also run the frontend and backend directly during development.
 
 You will need:
 
-* Node.js
-* npm
-* PostgreSQL installed locally or a remote PostgreSQL database
+- Node.js
+- npm
+- PostgreSQL
 
 ---
 
-### 6.1 Set Up PostgreSQL
+## Backend Setup
 
-Create a PostgreSQL database with these example details:
-
-```text
-Database name: pricewise
-Username: pricewise
-Password: pricewise_password
-Port: 5432
-```
-
-Example local database URL:
-
-```env
-DATABASE_URL="postgresql://pricewise:pricewise_password@localhost:5432/pricewise"
-```
-
-If you use the Docker database only, the mapped port is:
-
-```text
-5433
-```
-
-So the local connection string becomes:
-
-```env
-DATABASE_URL="postgresql://pricewise:pricewise_password@localhost:5433/pricewise"
-```
-
----
-
-### 6.2 Install Backend Dependencies
-
-Open a terminal in the project root folder.
-
-Move into the backend folder:
+Move into the backend:
 
 ```bash
 cd client-api
@@ -648,33 +594,47 @@ Install dependencies:
 npm install
 ```
 
-Create or update the backend `.env` file:
+Copy the environment example:
 
-```text
-client-api/.env
+### Windows PowerShell
+
+```powershell
+Copy-Item .env.example .env
 ```
 
-Example:
-
-```env
-PORT=5000
-DATABASE_URL="postgresql://pricewise:pricewise_password@localhost:5432/pricewise"
-CORS_ORIGINS="http://localhost:5173"
-SCRAPER_CRON="0 0 * * *"
-RUN_SCRAPE_ON_START="false"
-EMAIL_HOST="smtp.gmail.com"
-EMAIL_PORT=587
-EMAIL_USER=""
-EMAIL_PASS=""
-```
-
-Generate Prisma client:
+### macOS / Linux
 
 ```bash
-npx prisma generate
+cp .env.example .env
 ```
 
-Create database tables:
+For local non-Docker development, change the `DATABASE_URL`.
+
+The Docker configuration uses:
+
+```env
+DATABASE_URL=postgresql://pricewise:your_database_password_here@database:5432/pricewise
+```
+
+For PostgreSQL installed directly on your machine, use:
+
+```env
+DATABASE_URL=postgresql://pricewise:your_database_password_here@localhost:5432/pricewise
+```
+
+Also allow the Vite development frontend:
+
+```env
+CORS_ORIGINS=http://localhost:5173
+```
+
+Generate Prisma:
+
+```bash
+npm run prisma:generate
+```
+
+Apply the schema:
 
 ```bash
 npx prisma db push
@@ -686,21 +646,19 @@ Start the backend:
 npm run dev
 ```
 
-The backend should run on:
+The API runs at:
 
 ```text
 http://localhost:5000
 ```
 
-Leave this terminal open.
-
 ---
 
-### 6.3 Install Frontend Dependencies
+## Frontend Setup
 
-Open a second terminal.
+Open another terminal.
 
-Go to the project root folder again, then move into the frontend folder:
+Move into:
 
 ```bash
 cd frontend
@@ -712,32 +670,40 @@ Install dependencies:
 npm install
 ```
 
-Create or update the frontend `.env` file:
+The repository contains:
 
 ```text
-frontend/.env
+frontend/.env.example
 ```
 
-Example:
+Copy it:
+
+### Windows PowerShell
+
+```powershell
+Copy-Item .env.example .env
+```
+
+### macOS / Linux
+
+```bash
+cp .env.example .env
+```
+
+For local development, change the values to:
 
 ```env
-VITE_API_BASE_URL="http://localhost:5000"
-VITE_SOCKET_URL="http://localhost:5000"
+VITE_API_BASE_URL=http://localhost:5000
+VITE_SOCKET_URL=http://localhost:5000
 ```
 
-Start the frontend:
+Start Vite:
 
 ```bash
 npm run dev
 ```
 
-The frontend should run on:
-
-```text
-http://localhost:5173
-```
-
-Open this address in your browser:
+The development frontend runs at:
 
 ```text
 http://localhost:5173
@@ -745,111 +711,98 @@ http://localhost:5173
 
 ---
 
-## 7. How to Use the Application
+# Using PriceWise
 
-1. Open the frontend in your browser.
+Once the application is running:
 
-Docker mode:
+1. Open the frontend.
+2. Search for a grocery product.
+3. Use the available filters to narrow the results.
+4. Open a comparable product group.
+5. Compare supermarket prices.
+6. Add a product to the shopping list.
+7. Open the shopping-list page to review saved products.
+8. Optionally send the shopping list by email if email settings are configured.
 
-```text
-http://localhost:8080
-```
-
-Local development mode:
-
-```text
-http://localhost:5173
-```
-
-2. Use the search bar to search for grocery products.
-
-Example searches:
-
-```text
-milk
-bread
-coffee
-pasta
-```
-
-3. Use the filters to narrow results by:
-
-* Supermarket
-* Category
-* Product type
-
-4. Click on a product group to compare prices between supermarkets.
-
-5. Add products to your shopping list.
-
-6. Open the shopping list page to review selected products.
-
-7. If email settings are configured, enter your email address and send the shopping list to yourself.
-
-Important:
-
-Price data depends on the scraping cycle. By default, scraping runs once per day, so new prices may not appear immediately after starting the application.
+The shopping list does not require an account.
 
 ---
 
-## 8. Troubleshooting
+# Scraping
 
-### 8.1 Port Already in Use
+PriceWise collects product data from external supermarket websites.
 
-You may see an error like:
+Scraping is deliberately separated from normal user searches.
 
-```text
-Port 5000 is already in use
+By default, the example environment disables scraper execution:
+
+```env
+ENABLE_SCRAPERS=false
+RUN_SCRAPE_ON_START=false
 ```
 
-or:
+This is useful for normal local development.
 
-```text
-Port 8080 is already in use
+If scraper execution is enabled, keep in mind that:
+
+- external supermarket websites can change
+- HTML selectors may become outdated
+- dynamically loaded pages may require browser automation
+- network failures can interrupt scraping
+- an individual scraper may fail while others continue
+- collection can take significantly longer than normal API requests
+
+Scraping should be used responsibly and at a controlled frequency.
+
+---
+
+# Email Delivery
+
+Shopping-list email delivery is optional.
+
+Required variables:
+
+```env
+EMAIL_HOST=smtp.gmail.com
+EMAIL_PORT=587
+EMAIL_USER=your_email@gmail.com
+EMAIL_PASS=your_gmail_app_password_here
 ```
 
-This means another program is already using that port.
+If these values are not configured, the rest of PriceWise can still be used normally.
 
-Docker ports used by this project:
+Do not commit real SMTP credentials.
+
+---
+
+# Troubleshooting
+
+## Port Already in Use
+
+Docker uses:
 
 ```text
 Frontend: 8080
 Backend: 5000
-Database: 5433
+Database host port: 5433
 ```
 
-Local development ports:
+Vite local development uses:
 
 ```text
 Frontend: 5173
-Backend: 5000
-Database: 5432 or 5433
 ```
 
-Fix option 1:
+If a port is already in use, stop the conflicting application or change the relevant port mapping.
 
-Close the other program using the port.
-
-Fix option 2:
-
-Stop Docker containers:
-
-```bash
-docker compose down
-```
-
-Fix option 3:
-
-Change the port mapping in `docker-compose.yml`.
-
-Example:
+For example:
 
 ```yaml
 ports:
   - "8081:80"
 ```
 
-Then access the frontend at:
+would make the Docker frontend available at:
 
 ```text
 http://localhost:8081
@@ -857,17 +810,16 @@ http://localhost:8081
 
 ---
 
-### 8.2 Docker Is Not Starting
+## Docker Does Not Start
 
-If Docker Desktop does not start:
+Check:
 
-1. Restart Docker Desktop.
-2. Restart your computer.
-3. On Windows, make sure WSL 2 is enabled.
-4. Make sure virtualization is enabled in BIOS/UEFI.
-5. Reopen Docker Desktop and wait until it says it is running.
+1. Docker Desktop is running.
+2. WSL2 is available if using Docker Desktop on Windows.
+3. Hardware virtualisation is enabled.
+4. No existing container is already using the configured ports.
 
-Then try again:
+Then retry:
 
 ```bash
 docker compose up --build
@@ -875,9 +827,7 @@ docker compose up --build
 
 ---
 
-### 8.3 Database Tables Do Not Exist
-
-If the backend starts but product routes fail, the database tables may not have been created yet.
+## Database Tables Do Not Exist
 
 Run:
 
@@ -885,130 +835,112 @@ Run:
 docker exec -it pricewise-backend npx prisma db push
 ```
 
-Then restart the containers:
-
-```bash
-docker compose restart
-```
-
----
-
-### 8.4 Scraping Fails or Data Is Not Updated Immediately
-
-The scraping system collects products from supermarket websites.
-
-Important notes:
-
-* Scraping runs once per day by default.
-* New prices may not appear immediately.
-* Some supermarket websites may block or change their pages.
-* Scraping may take several minutes.
-* If the internet connection is unstable, scraping may fail.
-* If one supermarket scraper fails, the others may still continue.
-
-The schedule is controlled by:
-
-```env
-SCRAPER_CRON="0 0 * * *"
-```
-
-To run scraping when the backend starts, set:
-
-```env
-RUN_SCRAPE_ON_START="true"
-```
-
-Then restart the backend.
-
-Docker:
+Then restart the backend if necessary:
 
 ```bash
 docker compose restart backend
 ```
 
-Local development:
+---
 
-```bash
-npm run dev
+## Backend Cannot Connect to PostgreSQL
+
+For Docker, `DATABASE_URL` must use:
+
+```text
+database:5432
 ```
 
-Note:
+not:
 
-Running scraping on startup can make the first startup much slower.
+```text
+localhost:5433
+```
+
+because `database` is the PostgreSQL service name inside the Docker network.
+
+Example:
+
+```env
+DATABASE_URL=postgresql://pricewise:pricewise_local_password@database:5432/pricewise
+```
+
+When running the backend directly on the host machine instead, use:
+
+```text
+localhost:5432
+```
+
+or the port used by your local PostgreSQL installation.
 
 ---
 
-### 8.5 Email Sending Is Not Working
+## Frontend Cannot Reach the Backend
 
-If sending the shopping list by email does not work, check the backend `.env` file.
-
-Required variables:
+For local Vite development:
 
 ```env
-EMAIL_HOST="smtp.gmail.com"
-EMAIL_PORT=587
-EMAIL_USER="your-email@gmail.com"
-EMAIL_PASS="your-app-password"
+VITE_API_BASE_URL=http://localhost:5000
+VITE_SOCKET_URL=http://localhost:5000
 ```
 
-If these are empty, email sending will not work.
+For the Docker frontend, these values are supplied as build arguments by `docker-compose.yml`.
 
-For Gmail, you usually need a Gmail App Password.
-
-Do not use your normal Gmail password.
-
-If email is not configured, the rest of the application can still work normally.
-
----
-
-### 8.6 Frontend Cannot Connect to Backend
-
-Check the frontend `.env` file:
-
-```env
-VITE_API_BASE_URL="http://localhost:5000"
-VITE_SOCKET_URL="http://localhost:5000"
-```
-
-Check that the backend is running:
+Confirm that the backend is running on:
 
 ```text
 http://localhost:5000
 ```
 
-If the backend is working, you should see:
+---
 
-```json
-{
-  "message": "PriceWise API is running"
-}
+## Email Sending Does Not Work
+
+Check the backend `.env`:
+
+```env
+EMAIL_HOST=smtp.gmail.com
+EMAIL_PORT=587
+EMAIL_USER=your_email@gmail.com
+EMAIL_PASS=your_gmail_app_password_here
 ```
 
----
-
-### 8.7 Docker Build Takes a Long Time
-
-This is normal during the first build.
-
-Docker needs to:
-
-* Download Node.js images
-* Download PostgreSQL image
-* Install npm dependencies
-* Build the backend
-* Build the frontend
-* Install Playwright browser dependencies for scraping
-
-Future builds are usually faster because Docker caches previous steps.
+For Gmail, use a Gmail App Password rather than your normal account password.
 
 ---
 
-## 9. Folder Structure
+## Scraper Data Is Not Updating
 
-The project structure is:
+Check:
+
+```env
+ENABLE_SCRAPERS
+RUN_SCRAPE_ON_START
+SCRAPER_CRON
+```
+
+Also remember that supermarket websites are external dependencies.
+
+Changes to their page structure can require updates to scraper selectors or data-extraction logic.
+
+---
+
+## Docker Build Takes a Long Time
+
+This can be normal on the first backend build.
+
+The backend Docker image installs Chromium and the browser dependencies required by Playwright.
+
+Later builds can be faster because Docker reuses cached layers.
+
+---
+
+# Folder Structure
+
+A simplified view of the repository:
 
 ```text
-PriceWise/
+pricewise-app/
 ├── client-api/
 │   ├── prisma/
 │   │   └── schema.prisma
@@ -1022,85 +954,177 @@ PriceWise/
 │   │   ├── services/
 │   │   ├── sockets/
 │   │   └── utils/
+│   ├── .env.example
 │   ├── Dockerfile
-│   ├── package.json
-│   └── .env
+│   └── package.json
 │
 ├── frontend/
 │   ├── client/
-│   │   └── i18n/
 │   ├── public/
+│   ├── .env.example
 │   ├── Dockerfile
 │   ├── nginx.conf
-│   ├── package.json
-│   ├── vite.config.ts
-│   └── .env
+│   └── package.json
 │
 ├── docker-compose.yml
 └── README.md
 ```
 
-Important folders:
+---
+
+## Backend
 
 ```text
 client-api/
 ```
 
-Contains the backend API, database configuration, Prisma schema, scraping logic, email sending logic, and Socket.IO server.
+Contains:
+
+- Express API
+- Prisma configuration
+- PostgreSQL integration
+- scraper orchestration
+- product processing
+- email delivery
+- Socket.IO server
+- scheduled jobs
+
+---
+
+## Prisma Schema
 
 ```text
 client-api/prisma/schema.prisma
 ```
 
-Defines the PostgreSQL database structure.
+Defines the PostgreSQL data model.
+
+---
+
+## Scrapers
 
 ```text
 client-api/src/scrapers/
 ```
 
-Contains scraper files for supermarket product data.
+Contains supermarket-specific collection logic.
+
+---
+
+## Controllers and Routes
 
 ```text
 client-api/src/controllers/
+client-api/src/routes/
 ```
 
-Contains backend logic for products and email.
+Contain the backend request-handling and API routing logic.
+
+---
+
+## Frontend
 
 ```text
 frontend/
 ```
 
-Contains the React frontend application.
+Contains the React + TypeScript application.
 
-```text
-frontend/client/
-```
-
-Contains frontend source files.
-
-```text
-docker-compose.yml
-```
-
-Defines the Docker setup for the database, backend, and frontend.
+The frontend is built with Vite and served through Nginx in the Docker environment.
 
 ---
 
-## 10. License & Credits
+# Security and Privacy Notes
 
-This project is an academic project.
+PriceWise was designed to minimise unnecessary user-data collection.
 
-No commercial use is intended.
+The core comparison and shopping-list workflow does not require an account.
 
-Created as part of a software development / web application project to demonstrate:
+Repository rules:
 
-* Full-stack development
-* React frontend development
-* Node.js backend development
-* PostgreSQL database integration
-* Prisma ORM usage
-* Docker deployment
-* Web scraping
-* Real-time updates with Socket.IO
+- real `.env` files should not be committed
+- database credentials should remain outside source control
+- SMTP credentials should remain outside source control
+- Gmail App Passwords should never be committed
+- production credentials should be managed by the deployment platform
+
+The environment files included in the repository contain placeholders only.
 
 ---
+
+# Known Limitations
+
+PriceWise is an academic prototype rather than a commercial price-comparison platform.
+
+Current limitations include:
+
+- scraper reliability depends on external supermarket websites
+- changes to supermarket HTML can require scraper maintenance
+- matching similar products across supermarkets is inherently imperfect
+- product data is not guaranteed to be continuously real-time
+- automated unit and integration test coverage is a future improvement
+- some production-level monitoring and operational tooling is outside the project scope
+
+---
+
+# Future Improvements
+
+Potential next iterations include:
+
+- stronger product matching and normalisation
+- automated unit tests
+- automated integration tests
+- more supermarket sources
+- historical price tracking
+- price-change notifications
+- improved scraper monitoring
+- additional usability testing
+- offline-friendly mobile shopping-list functionality
+- further performance optimisation
+
+---
+
+# Academic Context
+
+PriceWise was developed as part of my **BSc (Hons) Computing (Software Development)** work.
+
+The project allowed me to apply:
+
+- full-stack software development
+- frontend development with React and TypeScript
+- REST API development
+- relational database design
+- Prisma ORM
+- web scraping
+- data normalisation
+- scheduled background processing
+- Docker
+- real-time communication with Socket.IO
+- UI/UX research and design
+- multilingual interface development
+- manual software testing
+- privacy-conscious application design
+
+The associated case study and thesis provide more detail about the research, requirements, implementation, testing, and design decisions.
+
+---
+
+# Author
+
+**Emmanouela Tsakalidou**
+
+GitHub:  
+https://github.com/EmmaTsak
+
+Portfolio:  
+https://emmatsak.github.io/portfolio
+
+---
+
+## Disclaimer
+
+PriceWise is an academic and portfolio project.
+
+Supermarket names, websites, product information, and pricing data belong to their respective owners.
+
+The project is not affiliated with or endorsed by the supermarkets whose publicly available product information may be processed by the application.
